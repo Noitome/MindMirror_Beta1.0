@@ -4,6 +4,9 @@ import { useMindMapStore } from '../store/mindMapStore'
 const Timer = ({ taskId, width, height }) => {
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [stopNote, setStopNote] = useState('')
+  const [stopOption, setStopOption] = useState('add_note')
+  const [selectedSubnode, setSelectedSubnode] = useState('')
+  const [newSubnodeName, setNewSubnodeName] = useState('')
   
   const task = useMindMapStore(state => state.tasks[taskId])
   const updateRunningTime = useMindMapStore(state => state.updateRunningTime)
@@ -12,6 +15,8 @@ const Timer = ({ taskId, width, height }) => {
   const addNote = useMindMapStore(state => state.addNote)
   const isMainNode = useMindMapStore(state => state.isMainNode)
   const nodeRelationships = useMindMapStore(state => state.nodeRelationships)
+  const nodes = useMindMapStore(state => state.nodes)
+  const tasks = useMindMapStore(state => state.tasks)
 
   useEffect(() => {
     let interval
@@ -155,11 +160,85 @@ const Timer = ({ taskId, width, height }) => {
                 resize: 'vertical'
               }}
             />
+            <div style={{ marginBottom: '15px' }}>
+              <h4>How should this time be handled?</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="radio"
+                    value="allocate_existing"
+                    checked={stopOption === 'allocate_existing'}
+                    onChange={(e) => setStopOption(e.target.value)}
+                  />
+                  Allocate to existing subnode
+                </label>
+                {stopOption === 'allocate_existing' && (
+                  <select
+                    value={selectedSubnode}
+                    onChange={(e) => setSelectedSubnode(e.target.value)}
+                    style={{
+                      marginLeft: '24px',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc'
+                    }}
+                  >
+                    <option value="">Select subnode...</option>
+                    {(nodeRelationships[taskId]?.children || []).map(childId => {
+                      const childNode = nodes.find(n => n.id === childId)
+                      return (
+                        <option key={childId} value={childId}>
+                          {childNode?.data.name || tasks[childId]?.name || 'Unnamed'}
+                        </option>
+                      )
+                    })}
+                  </select>
+                )}
+                
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="radio"
+                    value="create_new"
+                    checked={stopOption === 'create_new'}
+                    onChange={(e) => setStopOption(e.target.value)}
+                  />
+                  Create new subnode
+                </label>
+                {stopOption === 'create_new' && (
+                  <input
+                    type="text"
+                    value={newSubnodeName}
+                    onChange={(e) => setNewSubnodeName(e.target.value)}
+                    placeholder="New subnode name..."
+                    style={{
+                      marginLeft: '24px',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc'
+                    }}
+                  />
+                )}
+                
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="radio"
+                    value="add_note"
+                    checked={stopOption === 'add_note'}
+                    onChange={(e) => setStopOption(e.target.value)}
+                  />
+                  Add as note to this main node
+                </label>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => {
                   setShowStopConfirm(false)
                   setStopNote('')
+                  setStopOption('add_note')
+                  setSelectedSubnode('')
+                  setNewSubnodeName('')
                 }}
                 style={{
                   padding: '8px 16px',
@@ -175,19 +254,38 @@ const Timer = ({ taskId, width, height }) => {
               <button
                 onClick={() => {
                   if (stopNote.trim()) {
-                    stopTimer(taskId, stopNote.trim())
+                    const options = {
+                      type: stopOption,
+                      subnodeId: stopOption === 'allocate_existing' ? selectedSubnode : null,
+                      newSubnodeName: stopOption === 'create_new' ? newSubnodeName : null
+                    }
+                    
+                    stopTimer(taskId, stopNote.trim(), options)
                     setShowStopConfirm(false)
                     setStopNote('')
+                    setStopOption('add_note')
+                    setSelectedSubnode('')
+                    setNewSubnodeName('')
                   }
                 }}
-                disabled={!stopNote.trim()}
+                disabled={
+                  !stopNote.trim() || 
+                  (stopOption === 'allocate_existing' && !selectedSubnode) ||
+                  (stopOption === 'create_new' && !newSubnodeName.trim())
+                }
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: stopNote.trim() ? '#dc3545' : '#ccc',
+                  backgroundColor: (stopNote.trim() && 
+                    (stopOption === 'add_note' || 
+                     (stopOption === 'allocate_existing' && selectedSubnode) ||
+                     (stopOption === 'create_new' && newSubnodeName.trim()))) ? '#dc3545' : '#ccc',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: stopNote.trim() ? 'pointer' : 'not-allowed'
+                  cursor: (stopNote.trim() && 
+                    (stopOption === 'add_note' || 
+                     (stopOption === 'allocate_existing' && selectedSubnode) ||
+                     (stopOption === 'create_new' && newSubnodeName.trim()))) ? 'pointer' : 'not-allowed'
                 }}
               >
                 Stop Timer

@@ -1,9 +1,26 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { useMindMapStore } from '../store/mindMapStore'
+import StarRating from './StarRating'
+import CrownAchievement from './CrownAchievement'
+import DamageEffect from './DamageEffect'
 
 const ListView = ({ showBackendData }) => {
   const tasks = useMindMapStore(state => state.tasks)
   const nodes = useMindMapStore(state => state.nodes)
+  const selectOverallAlignment = useMindMapStore(state => state.selectOverallAlignment)
+  const selectInternalAlignment = useMindMapStore(state => state.selectInternalAlignment)
+  const isMainNode = useMindMapStore(state => state.isMainNode)
+  const updateAchievements = useMindMapStore(state => state.updateAchievements)
+  const triggerDamageEffect = useMindMapStore(state => state.triggerDamageEffect)
+  
+  const overallAlignment = selectOverallAlignment()
+  
+  useEffect(() => {
+    updateAchievements(overallAlignment)
+    if (overallAlignment < 95) {
+      triggerDamageEffect(overallAlignment)
+    }
+  }, [overallAlignment, updateAchievements, triggerDamageEffect])
 
   const taskList = useMemo(() => {
     // Create array of tasks with their bounding box size data
@@ -123,14 +140,22 @@ const ListView = ({ showBackendData }) => {
               gap: '10px',
               marginBottom: '20px'
             }}>
-              {taskList.map((task, index) => (
+              {taskList.map((task, index) => {
+                const nodeRelationships = useMindMapStore.getState().nodeRelationships
+                const isSubnode = nodeRelationships[task.id]?.parent
+                const indentLevel = isSubnode ? 1 : 0
+                
+                return (
                 <div key={task.id} style={{
                   backgroundColor: '#f8f9fa',
                   border: '1px solid #dee2e6',
                   borderRadius: '8px',
                   padding: isMobile ? '12px' : '15px',
                   position: 'relative',
-                  minHeight: isMobile ? '60px' : 'auto'
+                  minHeight: isMobile ? '60px' : 'auto',
+                  marginLeft: `${indentLevel * 1.25}rem`,
+                  width: `calc(100% - ${indentLevel * 1.25}rem)`,
+                  borderLeft: isSubnode ? '4px solid #007bff' : '1px solid #dee2e6'
                 }}>
                   <div style={{
                     display: 'flex',
@@ -143,9 +168,21 @@ const ListView = ({ showBackendData }) => {
                         margin: 0, 
                         color: '#333',
                         fontSize: isMobile ? '14px' : '16px',
-                        lineHeight: 1.3
+                        lineHeight: 1.3,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                       }}>
                         {index + 1}. {task.name}
+                        {isMainNode(task.id) && (
+                          <span style={{
+                            fontSize: '12px',
+                            color: '#666',
+                            fontWeight: 'normal'
+                          }}>
+                            (Internal: {selectInternalAlignment(task.id)}%)
+                          </span>
+                        )}
                       </h4>
                       <div style={{
                         fontSize: isMobile ? '11px' : '12px',
@@ -202,7 +239,7 @@ const ListView = ({ showBackendData }) => {
                     }} />
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </>
         )}
@@ -231,9 +268,13 @@ const ListView = ({ showBackendData }) => {
               fontSize: `${relativeFontSize}px`,
               fontWeight: 'bold',
               color: getAlignmentColor(totalAlignmentScore),
-              lineHeight: 1
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
               {totalAlignmentScore}%
+              <StarRating alignmentScore={totalAlignmentScore} size={relativeFontSize * 0.8} />
             </div>
             <div style={{
               fontSize: `${relativeFontSize * 0.6}px`,
@@ -269,6 +310,9 @@ const ListView = ({ showBackendData }) => {
           }} />
         </div>
       </div>
+      
+      <CrownAchievement alignmentScore={overallAlignment} />
+      <DamageEffect alignmentScore={overallAlignment} />
     </div>
   )
 }

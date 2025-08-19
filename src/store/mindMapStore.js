@@ -7,6 +7,8 @@
 import { create } from 'zustand'
 import { format } from 'date-fns'
 import { rollUpAllAncestors } from '../utils/rollup.js'
+import { persistence } from '../utils/persistence.js'
+import { eventLogger, logTimerStart, logTimerStop, logAlignmentChange, logNodeMove, logNodeCreate, logNodeLink } from '../utils/eventLogger.js'
 
 export const useMindMapStore = create((set, get) => ({
   nodes: [],
@@ -47,27 +49,42 @@ export const useMindMapStore = create((set, get) => ({
     })
   },
 
-  startTimer: (taskId) => {
+  startTimer: (taskId, note = null) => {
     set(state => {
+      const task = state.tasks[taskId]
+      if (!task || task.isRunning) return state
+
       const now = Date.now()
+      
+      const noteObj = {
+        id: Date.now(),
+        content: note || `Timer started at ${new Date(now).toLocaleString()}`,
+        createdAt: now,
+        type: 'start_note'
+      }
+
+      const runningInterval = {
+        start: now,
+        notes: [noteObj]
+      }
+
+      logTimerStart(taskId)
+
       return {
         tasks: {
           ...state.tasks,
           [taskId]: {
-            ...state.tasks[taskId],
+            ...task,
             isRunning: true,
             startTime: now,
-            runningInterval: {
-              start: now,
-              notes: []
-            }
+            runningInterval
           }
         }
       }
     })
   },
 
-  stopTimer: (taskId, note = null) => {
+  stopTimer: (taskId, note = null, options = null) => {
     set(state => {
       const task = state.tasks[taskId]
       if (!task?.isRunning) return state
@@ -90,22 +107,110 @@ export const useMindMapStore = create((set, get) => ({
         }]
       }
 
-      const updatedTask = {
-        ...task,
-        isRunning: false,
-        timeSpent: task.timeSpent + elapsed,
-        intervals: [...(task.intervals || []), newInterval],
-        runningInterval: null,
-        lastWorkedOn: now
+      let updatedTasks = { ...state.tasks }
+      
+      if (options && options.type) {
+        const { nodeRelationships } = state
+        const hasSubnodes = nodeRelationships[taskId]?.children?.length > 0
+        
+        if (hasSubnodes && options.type === 'allocate_existing' && options.subnodeId) {
+          const subnodeTask = updatedTasks[options.subnodeId]
+          if (subnodeTask) {
+            const allocationInterval = {
+              start: task.startTime,
+              end: now,
+              duration: elapsed,
+              notes: [{
+                id: Date.now(),
+                content: `Allocated from parent: ${note || 'Timer stopped'}`,
+                createdAt: now,
+                type: 'allocation'
+              }],
+              isAllocation: true
+            }
+            
+            updatedTasks[options.subnodeId] = {
+              ...subnodeTask,
+              timeSpent: subnodeTask.timeSpent + elapsed,
+              intervals: [...(subnodeTask.intervals || []), allocationInterval],
+              lastWorkedOn: now
+            }
+          }
+          
+          updatedTasks[taskId] = {
+            ...task,
+            isRunning: false,
+            runningInterval: null,
+            lastWorkedOn: now
+          }
+        } else if (hasSubnodes && options.type === 'create_new' && options.newSubnodeName) {
+          // Create new subnode and allocate time to it
+          const newSubnodeId = `node_${Date.now()}`
+          
+          updatedTasks[newSubnodeId] = {
+            id: newSubnodeId,
+            name: options.newSubnodeName,
+            timeSpent: elapsed,
+            isRunning: false,
+            startTime: null,
+            intervals: [{
+              start: task.startTime,
+              end: now,
+              duration: elapsed,
+              notes: [{
+                id: Date.now(),
+                content: `Created from parent allocation: ${note || 'Timer stopped'}`,
+                createdAt: now,
+                type: 'creation'
+              }]
+            }],
+            runningInterval: null,
+            createdAt: now,
+            lastWorkedOn: now
+          }
+          
+          updatedTasks[taskId] = {
+            ...task,
+            isRunning: false,
+            runningInterval: null,
+            lastWorkedOn: now
+          }
+          
+          return { 
+            tasks: updatedTasks,
+            pendingSubnodeCreation: {
+              parentId: taskId,
+              subnodeId: newSubnodeId,
+              name: options.newSubnodeName
+            }
+          }
+        } else {
+          updatedTasks[taskId] = {
+            ...task,
+            isRunning: false,
+            timeSpent: task.timeSpent + elapsed,
+            intervals: [...(task.intervals || []), newInterval],
+            runningInterval: null,
+            lastWorkedOn: now
+          }
+        }
+      } else {
+        updatedTasks[taskId] = {
+          ...task,
+          isRunning: false,
+          timeSpent: task.timeSpent + elapsed,
+          intervals: [...(task.intervals || []), newInterval],
+          runningInterval: null,
+          lastWorkedOn: now
+        }
       }
 
-      // Roll up time to all ancestor nodes
       const { nodeRelationships } = state
-      let updatedTasks = { ...state.tasks, [taskId]: updatedTask }
-
-      if (nodeRelationships[taskId]?.parent) {
+      if (nodeRelationships[taskId]?.parent && (!options || options.type === 'add_note')) {
         updatedTasks = rollUpAllAncestors(updatedTasks, nodeRelationships, taskId)
       }
+
+      logTimerStop(taskId, elapsed)
 
       return { tasks: updatedTasks }
     })
@@ -232,17 +337,14 @@ export const useMindMapStore = create((set, get) => ({
     set(state => {
       const newRelationships = { ...state.nodeRelationships }
 
-      // Initialize parent relationship if it doesn't exist
       if (!newRelationships[parentId]) {
         newRelationships[parentId] = { parent: null, children: [] }
       }
 
-      // Initialize child relationship if it doesn't exist
       if (!newRelationships[childId]) {
         newRelationships[childId] = { parent: null, children: [] }
       }
 
-      // Remove child from any existing parent
       if (newRelationships[childId].parent) {
         const oldParent = newRelationships[newRelationships[childId].parent]
         if (oldParent) {
@@ -250,19 +352,19 @@ export const useMindMapStore = create((set, get) => ({
         }
       }
 
-      // Set new relationship
       newRelationships[childId].parent = parentId
       if (!newRelationships[parentId].children.includes(childId)) {
         newRelationships[parentId].children.push(childId)
       }
 
-      // Create edge
       const newEdge = {
         id: `${parentId}-${childId}`,
         source: parentId,
         target: childId,
-        type: 'default'
+        type: 'smoothstep'
       }
+
+      logNodeLink(parentId, childId)
 
       return {
         nodeRelationships: newRelationships,
@@ -312,8 +414,20 @@ export const useMindMapStore = create((set, get) => ({
   },
 
   addNode: (newNode) => {
+    set(state => {
+      logNodeCreate(newNode.id, newNode.data)
+      return {
+        nodes: [...state.nodes, newNode]
+      }
+    })
+  },
+
+  addTask: (taskData) => {
     set(state => ({
-      nodes: [...state.nodes, newNode]
+      tasks: {
+        ...state.tasks,
+        [taskData.id]: taskData
+      }
     }))
   },
 
@@ -323,7 +437,6 @@ export const useMindMapStore = create((set, get) => ({
 
   updateTaskName: (id, name) => {
     set(state => {
-      // Check for existing task with the same name
       let existingTask = Object.values(state.tasks).find(task => task.name === name && task.id !== id)
       let newName = name
       let counter = 2
@@ -355,39 +468,19 @@ export const useMindMapStore = create((set, get) => ({
     })
   },
 
-  addTask: (id, name) => {
+  updateTaskSize: (taskId, width, height) => {
     set(state => {
-      // Check for existing task with the same name
-      let existingTask = Object.values(state.tasks).find(task => task.name === name)
-      let newName = name
-      let counter = 2
+      const updatedNodes = state.nodes.map(node => 
+        node.id === taskId 
+          ? { ...node, data: { ...node.data, width, height } }
+          : node
+      )
 
-      while (existingTask) {
-        newName = `${name} (${counter})`
-        counter++
-        existingTask = Object.values(state.tasks).find(task => task.name === newName)
-      }
-
-      return {
-        tasks: {
-          ...state.tasks,
-          [id]: {
-            id,
-            name: newName,
-            timeSpent: 0,
-            isRunning: false,
-            startTime: null,
-            intervals: [],
-            runningInterval: null,
-            createdAt: Date.now(),
-            lastWorkedOn: null
-          }
-        }
-      }
+      return { nodes: updatedNodes }
     })
   },
 
-  exportData: () => {
+  exportCSV: () => {
     const { tasks } = get()
     const rows = [
       ['Task Name', 'Start Time', 'End Time', 'Duration', 'Notes', 'Type']
@@ -477,7 +570,7 @@ export const useMindMapStore = create((set, get) => ({
     const { nodeRelationships, tasks } = get()
     const children = nodeRelationships[mainNodeId]?.children || []
     
-    if (children.length === 0) return 100 // Perfect if no subnodes
+    if (children.length === 0) return 100
 
     let totalActual = 0
     let totalTarget = 0
@@ -492,6 +585,155 @@ export const useMindMapStore = create((set, get) => ({
     })
 
     if (totalTarget === 0) return 100
-    return Math.min(100, Math.round((totalActual / totalTarget) * 100))
+    const ratio = totalActual / totalTarget
+    return Math.max(0, Math.min(100, Math.round(100 - Math.abs(ratio - 1) * 100)))
+  },
+
+  getStarRating: (alignmentScore) => {
+    if (alignmentScore >= 90) return 5
+    if (alignmentScore >= 80) return 4
+    if (alignmentScore >= 70) return 3
+    if (alignmentScore >= 60) return 2
+    if (alignmentScore >= 50) return 1
+    return 0
+  },
+
+  achievements: {
+    crownCount: 0,
+    lastCrownTime: null,
+    crownColor: 'gold',
+    isPermanentBackground: false
+  },
+
+  pendingSubnodeCreation: null,
+
+  damageEffects: {
+    isActive: false,
+    intensity: 1,
+    type: 'flash'
+  },
+
+  updateAchievements: (alignmentScore) => {
+    set(state => {
+      const newAchievements = { ...state.achievements }
+      
+      if (alignmentScore === 100 && state.achievements.crownCount === 0) {
+        newAchievements.crownCount = 1
+        newAchievements.lastCrownTime = Date.now()
+      } else if (alignmentScore === 100 && Date.now() - state.achievements.lastCrownTime > 60000) {
+        newAchievements.crownCount += 1
+        newAchievements.lastCrownTime = Date.now()
+      }
+      
+      if (newAchievements.crownCount >= 100) {
+        newAchievements.crownColor = 'blue'
+        newAchievements.isPermanentBackground = alignmentScore >= 40
+      } else if (newAchievements.crownCount >= 10) {
+        newAchievements.crownColor = 'blue'
+      } else if (newAchievements.crownCount >= 5) {
+        newAchievements.crownColor = 'green'
+      }
+      
+      return { achievements: newAchievements }
+    })
+  },
+
+  triggerDamageEffect: (alignmentScore) => {
+    set(state => {
+      if (alignmentScore >= 95) return state
+      
+      let intensity = 1
+      let type = 'flash'
+      
+      if (alignmentScore < 10) {
+        intensity = 5
+        type = 'barrage'
+      } else if (alignmentScore < 20) {
+        intensity = 4
+        type = 'multi'
+      } else if (alignmentScore < 30) {
+        intensity = 3
+        type = 'multi'
+      } else if (alignmentScore < 40) {
+        intensity = 2
+        type = 'double'
+      } else if (alignmentScore < 50) {
+        intensity = 1.5
+        type = 'flash'
+      }
+      
+      return {
+        damageEffects: {
+          isActive: true,
+          intensity,
+          type,
+          timestamp: Date.now()
+        }
+      }
+    })
+  },
+
+  clearDamageEffect: () => {
+    set(state => ({
+      damageEffects: { ...state.damageEffects, isActive: false }
+    }))
+  },
+
+  saveState: async () => {
+    const state = get()
+    const saveData = {
+      tasks: state.tasks,
+      nodes: state.nodes,
+      edges: state.edges,
+      nodeRelationships: state.nodeRelationships,
+      achievements: state.achievements,
+      eventLog: eventLogger.exportEvents()
+    }
+    
+    try {
+      await persistence.saveLocal(saveData)
+    } catch (error) {
+      console.error('Failed to save state:', error)
+    }
+  },
+
+  loadState: async () => {
+    try {
+      const data = await persistence.loadLocal()
+      if (data) {
+        set({
+          tasks: data.tasks || {},
+          nodes: data.nodes || [],
+          edges: data.edges || [],
+          nodeRelationships: data.nodeRelationships || {},
+          achievements: data.achievements || {
+            crownCount: 0,
+            lastCrownTime: null,
+            crownColor: 'gold',
+            isPermanentBackground: false
+          }
+        })
+        
+        if (data.eventLog) {
+          eventLogger.importEvents(data.eventLog)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load state:', error)
+    }
+  },
+
+  exportData: async () => {
+    const state = get()
+    const exportData = {
+      tasks: state.tasks,
+      nodes: state.nodes,
+      edges: state.edges,
+      nodeRelationships: state.nodeRelationships,
+      achievements: state.achievements,
+      eventLog: eventLogger.exportEvents()
+    }
+    
+    await persistence.exportData(exportData)
   }
 }))
