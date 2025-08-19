@@ -1,0 +1,21 @@
+
+MindMirror / Mindmap-App — Ownership & Public Disclosure NOTICE
+First Public Disclosure: 2025-08-18 (AEST, Australia/Melbourne)
+Repository: https://github.com/Noitome/MindMirror_Alpha1.02
+
+This repository documents the original concept, design, and implementation of an adaptive, visual-first
+goal & task mapping application ("MindMirror") authored by Daniel ("Author"). The system includes:
+- A mindmap view of nodes (goals/tasks) with visual connections;
+- A mirror view of dynamic bubbles whose size scales with time spent;
+- Timers with subnode → parent aggregation;
+- A dynamic alignment score reflecting time alignment with goals; and
+- A combined view integrating mindmap + mirror.
+
+The above constitutes the core inventive concept and expression embodied in this codebase and related materials.
+
+Copyright © 2025 Daniel. All rights reserved where not otherwise licensed.
+
+Licensing: Source code portions are licensed under the project's LICENSE file (MIT unless otherwise noted).
+Trademarks, names, logos, and brand assets are reserved and not licensed by default.
+
+This NOTICE serves as evidence of authorship and public disclosure as of the date stated above.

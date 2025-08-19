@@ -1,0 +1,155 @@
+:root {
+  --primary-color: #4CAF50;
+  --secondary-color: #f0f0f0;
+}
+
+/* Ensure the full height chain */
+html, body, #root { 
+  height: 100%; 
+  margin: 0; 
+  padding: 0; 
+}
+
+/* App shell fills the viewport using modern dynamic viewport units with fallbacks */
+:root {
+  /* Fallback for older browsers */
+  --vh: 1vh;
+}
+
+#app {
+  width: 100vw;
+  height: 100dvh;            /* modern dynamic viewport */
+  height: 100svh;            /* small viewport (iOS safe) */
+  height: calc(var(--vh) * 100); /* legacy fallback via JS var */
+  overflow: hidden;
+}
+
+/* React Flow & Mirror containers must stretch */
+.mm-full {
+  width: 100%;
+  height: 100%;
+}
+
+/* Optional: avoid scroll bounce during resize/rotate */
+body {
+  min-width: 320px;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  height: 60px;
+  padding: 0 1rem;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.views-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.views-container.split {
+  flex-direction: row;
+}
+
+.views-container.row {
+  flex-direction: row;
+}
+
+.views-container.column {
+  flex-direction: column;
+}
+
+.mind-map-view,
+.list-view,
+.reality-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.views-container.split .mind-map-view,
+.views-container.split .list-view,
+.views-container.split .reality-view {
+  width: 33.33%;
+}
+
+.views-container.row .mind-map-view,
+.views-container.row .list-view,
+.views-container.row .reality-view {
+  height: 50vh;
+  overflow: auto;
+}
+
+.views-container.column .mind-map-view,
+.views-container.column .list-view,
+.views-container.column .reality-view {
+  height: 33vh;
+  overflow: auto;
+}
+
+.mind-map-view {
+  background: white;
+}
+
+.list-view {
+  background: #fafafa;
+}
+
+.reality-view {
+  background: #f5f5f5;
+}
+
+h2 {
+  margin: 0;
+  padding: 1rem;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.task-node {
+  transition: all 0.2s ease;
+}
+
+.task-name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.timer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer button {
+  padding: 5px 10px;
+  font-size: 0.8em;
+}
