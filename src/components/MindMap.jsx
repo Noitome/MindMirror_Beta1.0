@@ -114,6 +114,19 @@ const MindMapContent = () => {
     }
   }, [pendingSubnodeCreation, nodes, addNode, linkNodes, fitView])
 
+  useEffect(() => {
+    const nodeCount = nodes.length
+    if (nodeCount > 0) {
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.1, duration: 300 })
+        } catch (error) {
+          console.warn('FitView failed:', error)
+        }
+      }, 100)
+    }
+  }, [nodes.length, fitView])
+
   // Enhanced resize, orientation, and visibility handling
   useEffect(() => {
     const container = containerRef.current
