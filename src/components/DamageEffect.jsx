@@ -63,7 +63,7 @@ const DamageEffect = ({ alignmentScore }) => {
     
     setTimeout(() => {
       setIsBlurred(false)
-    }, duration + 10000)
+    }, duration + 1250)
   }
   
   const playAlarm = () => {

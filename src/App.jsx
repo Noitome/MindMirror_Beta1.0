@@ -68,7 +68,7 @@ function App() {
               minHeight: '44px'
             }}
           >
-            {window.innerWidth <= 768 ? '+' : 'Add Task'}
+            {window.innerWidth <= 768 ? '+' : 'Add Goal'}
           </button>
           <button 
             onClick={exportData}

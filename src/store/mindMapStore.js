@@ -15,6 +15,13 @@ export const useMindMapStore = create((set, get) => ({
   edges: [],
   tasks: {},
   nodeRelationships: {}, // { nodeId: { parent: parentId, children: [childIds] } }
+  goalCounter: 0,
+  nodeCreationTime: null,
+  popupOpen: false,
+  
+  setPopupOpen: (isOpen) => {
+    set({ popupOpen: isOpen })
+  },
 
   addNote: (taskId, content) => {
     set(state => {
@@ -108,6 +115,32 @@ export const useMindMapStore = create((set, get) => ({
       }
 
       let updatedTasks = { ...state.tasks }
+      
+      const isMainNode = !state.nodeRelationships[taskId]?.parent
+      if (isMainNode) {
+        const runningSubnodes = (state.nodeRelationships[taskId]?.children || []).filter(childId => 
+          updatedTasks[childId]?.isRunning
+        )
+        
+        if (runningSubnodes.length > 0) {
+          const subnodeDetails = runningSubnodes.map(childId => {
+            const childTask = updatedTasks[childId]
+            const childNode = state.nodes.find(n => n.id === childId)
+            const childElapsed = Math.floor((now - childTask.startTime) / 1000)
+            const minutes = Math.floor(childElapsed / 60)
+            const seconds = childElapsed % 60
+            return `${childNode?.data.name || 'Unnamed'} (${minutes}m ${seconds}s)`
+          }).join(', ')
+          
+          const simultaneousNote = `Simultaneous timers detected: ${subnodeDetails} - total time shown in brackets`
+          newInterval.notes = [...(newInterval.notes || []), {
+            id: Date.now() + 1,
+            content: simultaneousNote,
+            createdAt: now,
+            type: 'simultaneous_timer_note'
+          }]
+        }
+      }
       
       if (options && options.type) {
         const { nodeRelationships } = state
@@ -205,9 +238,8 @@ export const useMindMapStore = create((set, get) => ({
         }
       }
 
-      const { nodeRelationships } = state
-      if (nodeRelationships[taskId]?.parent && (!options || options.type === 'add_note')) {
-        updatedTasks = rollUpAllAncestors(updatedTasks, nodeRelationships, taskId)
+      if (state.nodeRelationships[taskId]?.parent && (!options || options.type === 'add_note')) {
+        updatedTasks = rollUpAllAncestors(updatedTasks, state.nodeRelationships, taskId)
       }
 
       logTimerStop(taskId, elapsed)
@@ -268,10 +300,8 @@ export const useMindMapStore = create((set, get) => ({
         }
       }
 
-      // Roll up time adjustments to ancestors
-      const { nodeRelationships } = state
-      if (nodeRelationships[taskId]?.parent) {
-        updatedTasks = rollUpAllAncestors(updatedTasks, nodeRelationships, taskId)
+      if (state.nodeRelationships[taskId]?.parent) {
+        updatedTasks = rollUpAllAncestors(updatedTasks, state.nodeRelationships, taskId)
       }
 
       return { tasks: updatedTasks }
@@ -280,54 +310,53 @@ export const useMindMapStore = create((set, get) => ({
 
   updateTaskSize: (taskId, width, height) => {
     set(state => {
-      const { nodeRelationships } = state
-      const relationship = nodeRelationships[taskId]
-
-      // Check if this size conflicts with cluster siblings or parent
-      const conflictingNodes = []
-
-      if (relationship?.parent) {
-        const parent = state.nodes.find(n => n.id === relationship.parent)
-        if (parent && Math.abs(parent.data.width - width) < 10 && Math.abs(parent.data.height - height) < 10) {
-          conflictingNodes.push(parent)
-        }
-
-        // Check siblings
-        const siblings = nodeRelationships[relationship.parent]?.children?.filter(id => id !== taskId) || []
-        siblings.forEach(siblingId => {
-          const sibling = state.nodes.find(n => n.id === siblingId)
-          if (sibling && Math.abs(sibling.data.width - width) < 10 && Math.abs(sibling.data.height - height) < 10) {
-            conflictingNodes.push(sibling)
-          }
-        })
+      const calculateOverlapPercentage = (rect1, rect2) => {
+        const overlapX = Math.max(0, Math.min(rect1.x + rect1.width, rect2.x + rect2.width) - Math.max(rect1.x, rect2.x))
+        const overlapY = Math.max(0, Math.min(rect1.y + rect1.height, rect2.y + rect2.height) - Math.max(rect1.y, rect2.y))
+        const overlapArea = overlapX * overlapY
+        const rect1Area = rect1.width * rect1.height
+        const rect2Area = rect2.width * rect2.height
+        const smallerArea = Math.min(rect1Area, rect2Area)
+        return smallerArea > 0 ? overlapArea / smallerArea : 0
       }
 
-      if (relationship?.children) {
-        relationship.children.forEach(childId => {
-          const child = state.nodes.find(n => n.id === childId)
-          if (child && Math.abs(child.data.width - width) < 10 && Math.abs(child.data.height - height) < 10) {
-            conflictingNodes.push(child)
-          }
-        })
-      }
+      const currentNode = state.nodes.find(n => n.id === taskId)
+      if (!currentNode) return state
 
-      // Adjust conflicting sizes
-      let updatedNodes = state.nodes.map(node => {
-        if (conflictingNodes.find(n => n.id === node.id)) {
-          const adjustment = (Math.random() - 0.5) * 40 + 20 // Random adjustment of ±20-40px
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              width: Math.max(50, node.data.width + adjustment),
-              height: Math.max(50, node.data.height + adjustment)
-            }
+      const newRect = { x: currentNode.position.x, y: currentNode.position.y, width, height }
+      
+      const relationships = state.nodeRelationships[taskId]
+      const parentId = relationships?.parent
+      const siblings = parentId ? (state.nodeRelationships[parentId]?.children || []).filter(id => id !== taskId) : []
+      const children = relationships?.children || []
+      
+      for (const siblingId of siblings) {
+        const siblingNode = state.nodes.find(n => n.id === siblingId)
+        if (siblingNode) {
+          const siblingRect = { x: siblingNode.position.x, y: siblingNode.position.y, width: siblingNode.data.width, height: siblingNode.data.height }
+          const overlapPercentage = calculateOverlapPercentage(newRect, siblingRect)
+          if (overlapPercentage > 0.15) {
+            return state // Prevent update if overlap exceeds 15%
           }
         }
-        return node.id === taskId 
+      }
+      
+      for (const childId of children) {
+        const childNode = state.nodes.find(n => n.id === childId)
+        if (childNode) {
+          const childRect = { x: childNode.position.x, y: childNode.position.y, width: childNode.data.width, height: childNode.data.height }
+          const overlapPercentage = calculateOverlapPercentage(newRect, childRect)
+          if (overlapPercentage > 0.15) {
+            return state // Prevent update if overlap exceeds 15%
+          }
+        }
+      }
+
+      const updatedNodes = state.nodes.map(node => 
+        node.id === taskId 
           ? { ...node, data: { ...node.data, width, height } }
           : node
-      })
+      )
 
       return { nodes: updatedNodes }
     })
@@ -446,26 +475,21 @@ export const useMindMapStore = create((set, get) => ({
 
   addTask: (taskData) => {
     set(state => {
+      const goalName = `Goal ${state.goalCounter + 1}`
+      const newTaskData = { ...taskData, name: goalName }
+      
       const newNode = {
         id: taskData.id,
         type: 'task',
-        position: { x: Math.random() * 400, y: Math.random() * 400 },
-        data: {
-          name: taskData.name,
-          width: 150,
-          height: 100,
-          timeSpent: taskData.timeSpent || 0,
-          isRunning: taskData.isRunning || false
-        }
+        position: { x: Math.random() * 400, y: Math.random() * 300 },
+        data: { name: goalName, width: 200, height: 150 }
       }
-
+      
       return {
-        tasks: {
-          ...state.tasks,
-          [taskData.id]: taskData
-        },
+        tasks: { ...state.tasks, [taskData.id]: newTaskData },
         nodes: [...state.nodes, newNode],
-        lastNodeCreationTime: Date.now()
+        goalCounter: state.goalCounter + 1,
+        nodeCreationTime: Date.now()
       }
     })
   },
@@ -474,50 +498,39 @@ export const useMindMapStore = create((set, get) => ({
     set({ edges })
   },
 
-  updateTaskName: (id, name) => {
+  updateTaskName: (taskId, newName) => {
     set(state => {
-      let existingTask = Object.values(state.tasks).find(task => task.name === name && task.id !== id)
-      let newName = name
-      let counter = 2
-
-      while (existingTask) {
-        newName = `${name} (${counter})`
-        counter++
-        existingTask = Object.values(state.tasks).find(task => task.name === newName && task.id !== id)
-      }
-
-      const updatedTasks = {
-        ...state.tasks,
-        [id]: {
-          ...state.tasks[id],
-          name: newName
+      // Check if the new name follows "Goal X" pattern and update goalCounter if needed
+      const goalMatch = newName.match(/^Goal (\d+)$/)
+      let newGoalCounter = state.goalCounter
+      
+      if (goalMatch) {
+        const goalNumber = parseInt(goalMatch[1])
+        if (goalNumber > state.goalCounter) {
+          newGoalCounter = goalNumber
         }
       }
-
-      const updatedNodes = state.nodes.map(node => 
-        node.id === id 
-          ? { ...node, data: { ...node.data, name: newName } }
-          : node
-      )
-
+      
+      const existingNames = Object.values(state.tasks).map(task => task.name)
+      if (existingNames.includes(newName) && state.tasks[taskId].name !== newName) {
+        return state // Prevent duplicate names
+      }
+      
       return {
-        tasks: updatedTasks,
-        nodes: updatedNodes
+        tasks: {
+          ...state.tasks,
+          [taskId]: { ...state.tasks[taskId], name: newName }
+        },
+        nodes: state.nodes.map(node => 
+          node.id === taskId 
+            ? { ...node, data: { ...node.data, name: newName } }
+            : node
+        ),
+        goalCounter: newGoalCounter
       }
     })
   },
 
-  updateTaskSize: (taskId, width, height) => {
-    set(state => {
-      const updatedNodes = state.nodes.map(node => 
-        node.id === taskId 
-          ? { ...node, data: { ...node.data, width, height } }
-          : node
-      )
-
-      return { nodes: updatedNodes }
-    })
-  },
 
   exportCSV: () => {
     const { tasks } = get()
@@ -739,6 +752,7 @@ export const useMindMapStore = create((set, get) => ({
       edges: state.edges,
       nodeRelationships: state.nodeRelationships,
       achievements: state.achievements,
+      goalCounter: state.goalCounter,
       eventLog: eventLogger.exportEvents()
     }
     
@@ -763,7 +777,8 @@ export const useMindMapStore = create((set, get) => ({
             lastCrownTime: null,
             crownColor: 'gold',
             isPermanentBackground: false
-          }
+          },
+          goalCounter: data.goalCounter || 0
         })
         
         if (data.eventLog) {
@@ -783,10 +798,70 @@ export const useMindMapStore = create((set, get) => ({
       edges: state.edges,
       nodeRelationships: state.nodeRelationships,
       achievements: state.achievements,
+      goalCounter: state.goalCounter,
       eventLog: eventLogger.exportEvents()
     }
     
     await persistence.exportData(exportData)
+  },
+
+  deleteNode: (nodeId, mergeOptions = null) => {
+    set(state => {
+      const { tasks, nodes, nodeRelationships } = state
+      const nodeToDelete = tasks[nodeId]
+      
+      if (!nodeToDelete) return state
+      
+      let updatedTasks = { ...tasks }
+      let updatedNodes = nodes.filter(n => n.id !== nodeId)
+      let updatedRelationships = { ...nodeRelationships }
+      
+      if (mergeOptions && mergeOptions.targetNodeId) {
+        const targetNode = updatedTasks[mergeOptions.targetNodeId]
+        if (targetNode) {
+          updatedTasks[mergeOptions.targetNodeId] = {
+            ...targetNode,
+            timeSpent: targetNode.timeSpent + nodeToDelete.timeSpent,
+            intervals: [
+              ...(targetNode.intervals || []),
+              ...(nodeToDelete.intervals || []).map(interval => ({
+                ...interval,
+                notes: (interval.notes || []).map(note => ({
+                  ...note,
+                  content: `(from ${nodeToDelete.name}) ${note.content}`,
+                  backgroundColor: '#e3f2fd'
+                }))
+              }))
+            ]
+          }
+        }
+      }
+      
+      if (updatedRelationships[nodeId]) {
+        const parent = updatedRelationships[nodeId].parent
+        const children = updatedRelationships[nodeId].children || []
+        
+        if (parent && updatedRelationships[parent]) {
+          updatedRelationships[parent].children = updatedRelationships[parent].children.filter(id => id !== nodeId)
+        }
+        
+        children.forEach(childId => {
+          if (updatedRelationships[childId]) {
+            updatedRelationships[childId].parent = null
+          }
+        })
+        
+        delete updatedRelationships[nodeId]
+      }
+      
+      delete updatedTasks[nodeId]
+      
+      return {
+        tasks: updatedTasks,
+        nodes: updatedNodes,
+        nodeRelationships: updatedRelationships
+      }
+    })
   }
 }))
 
