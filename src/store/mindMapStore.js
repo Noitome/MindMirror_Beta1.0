@@ -423,12 +423,28 @@ export const useMindMapStore = create((set, get) => ({
   },
 
   addTask: (taskData) => {
-    set(state => ({
-      tasks: {
-        ...state.tasks,
-        [taskData.id]: taskData
+    set(state => {
+      const newNode = {
+        id: taskData.id,
+        type: 'task',
+        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        data: {
+          name: taskData.name,
+          width: 150,
+          height: 100,
+          timeSpent: taskData.timeSpent || 0,
+          isRunning: taskData.isRunning || false
+        }
       }
-    }))
+
+      return {
+        tasks: {
+          ...state.tasks,
+          [taskData.id]: taskData
+        },
+        nodes: [...state.nodes, newNode]
+      }
+    })
   },
 
   updateEdges: (edges) => {
@@ -737,3 +753,5 @@ export const useMindMapStore = create((set, get) => ({
     await persistence.exportData(exportData)
   }
 }))
+
+export default useMindMapStore

@@ -18,14 +18,16 @@ function App() {
 
   const addNewTask = () => {
     const id = Date.now().toString()
-    const newNode = {
+    const taskData = {
       id,
-      type: 'task',
-      position: { x: Math.random() * 400, y: Math.random() * 300 },
-      data: { name: 'New Task', width: 200, height: 150 }
+      name: 'New Task',
+      timeSpent: 0,
+      isRunning: false,
+      intervals: [],
+      createdAt: Date.now(),
+      lastWorkedOn: null
     }
-    addNode(newNode)
-    addTask(id, 'New Task')
+    addTask(taskData)
   }
 
   return (

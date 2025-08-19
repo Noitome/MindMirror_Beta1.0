@@ -54,7 +54,10 @@ const RealityView = () => {
     if (mainNodes.length === 0) return
 
     const totalTime = mainNodes.reduce((sum, node) => sum + selectAggregatedTime(node.id), 0)
-    if (totalTime === 0) return
+    const fallbackTotalTime = mainNodes.reduce((sum, node) => sum + (tasks[node.id]?.timeSpent || 0), 0)
+    const displayTotalTime = totalTime > 0 ? totalTime : fallbackTotalTime
+    
+    if (displayTotalTime === 0) return
 
     const centerX = width / 2
     const centerY = height / 2
@@ -66,7 +69,9 @@ const RealityView = () => {
       if (!task) return
       
       const aggregatedTime = selectAggregatedTime(node.id)
-      const timeRatio = aggregatedTime / totalTime
+      const taskTime = tasks[node.id]?.timeSpent || 0
+      const displayTime = aggregatedTime > 0 ? aggregatedTime : taskTime
+      const timeRatio = displayTime / displayTotalTime
       const radius = Math.max(30, baseRadius * Math.sqrt(timeRatio) * 2)
       
       const fontSize = Math.max(12, Math.min(radius * 0.25, 20))
@@ -114,7 +119,7 @@ const RealityView = () => {
       
       // Draw formatted duration
       ctx.font = `${timeFontSize}px Arial`
-      ctx.fillText(formatDuration(aggregatedTime), x, y + fontSize * 0.8)
+      ctx.fillText(formatDuration(Math.round(displayTime)), x, y + fontSize * 0.8)
       
       angle += Math.PI * 2 / mainNodes.length
     })
