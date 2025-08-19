@@ -337,6 +337,28 @@ export const useMindMapStore = create((set, get) => ({
     set(state => {
       const newRelationships = { ...state.nodeRelationships }
 
+      if (newRelationships[childId]?.parent) {
+        console.warn('Cannot create sub-sub node: child already has a parent')
+        return state
+      }
+
+      const isDescendant = (nodeId, ancestorId) => {
+        const relationship = newRelationships[nodeId]
+        if (!relationship?.parent) return false
+        if (relationship.parent === ancestorId) return true
+        return isDescendant(relationship.parent, ancestorId)
+      }
+
+      if (isDescendant(parentId, childId)) {
+        console.warn('Cannot create circular relationship')
+        return state
+      }
+
+      if (newRelationships[parentId]?.children?.length >= 10) {
+        console.warn('Cannot add more than 10 subnodes to a parent')
+        return state
+      }
+
       if (!newRelationships[parentId]) {
         newRelationships[parentId] = { parent: null, children: [] }
       }
@@ -442,7 +464,8 @@ export const useMindMapStore = create((set, get) => ({
           ...state.tasks,
           [taskData.id]: taskData
         },
-        nodes: [...state.nodes, newNode]
+        nodes: [...state.nodes, newNode],
+        lastNodeCreationTime: Date.now()
       }
     })
   },
@@ -629,6 +652,9 @@ export const useMindMapStore = create((set, get) => ({
     type: 'flash'
   },
 
+  lastNodeCreationTime: null,
+  isAnyPopupOpen: false,
+
   updateAchievements: (alignmentScore) => {
     set(state => {
       const newAchievements = { ...state.achievements }
@@ -657,6 +683,12 @@ export const useMindMapStore = create((set, get) => ({
   triggerDamageEffect: (alignmentScore) => {
     set(state => {
       if (alignmentScore >= 95) return state
+      
+      if (state.isAnyPopupOpen) return state
+      
+      if (state.lastNodeCreationTime && Date.now() - state.lastNodeCreationTime < 5000) {
+        return state
+      }
       
       let intensity = 1
       let type = 'flash'
@@ -687,6 +719,10 @@ export const useMindMapStore = create((set, get) => ({
         }
       }
     })
+  },
+
+  setPopupOpen: (isOpen) => {
+    set({ isAnyPopupOpen: isOpen })
   },
 
   clearDamageEffect: () => {

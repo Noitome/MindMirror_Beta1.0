@@ -11,7 +11,14 @@ const TaskNode = ({ id, data, selected }) => {
   const [showNotes, setShowNotes] = useState(false)
   const [showTimeAdjuster, setShowTimeAdjuster] = useState(false)
   const [showLinking, setShowLinking] = useState(false)
+  
+  const setPopupOpen = useMindMapStore(state => state.setPopupOpen)
   const [linkingMode, setLinkingMode] = useState(null) // 'parent' or 'child'
+  
+  React.useEffect(() => {
+    const isAnyPopupOpen = showNotes || showTimeAdjuster || showLinking
+    setPopupOpen(isAnyPopupOpen)
+  }, [showNotes, showTimeAdjuster, showLinking, setPopupOpen])
   
   const updateTaskName = useMindMapStore(state => state.updateTaskName)
   const task = useMindMapStore(state => state.tasks[id])
@@ -208,8 +215,9 @@ const TaskNode = ({ id, data, selected }) => {
               backgroundColor: 'white',
               padding: '20px',
               borderRadius: '8px',
-              maxWidth: '500px',
-              maxHeight: '80vh',
+              minWidth: Math.min(400, window.innerWidth * 0.9) + 'px',
+              maxWidth: Math.min(600, window.innerWidth * 0.95) + 'px',
+              maxHeight: window.innerHeight * 0.9 + 'px',
               overflow: 'auto',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }} onClick={e => e.stopPropagation()}>
@@ -255,7 +263,10 @@ const TaskNode = ({ id, data, selected }) => {
               backgroundColor: 'white',
               padding: '20px',
               borderRadius: '8px',
-              maxWidth: '400px',
+              minWidth: Math.min(300, window.innerWidth * 0.9) + 'px',
+              maxWidth: Math.min(500, window.innerWidth * 0.95) + 'px',
+              maxHeight: window.innerHeight * 0.9 + 'px',
+              overflow: 'auto',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }} onClick={e => e.stopPropagation()}>
               <div style={{
@@ -300,8 +311,9 @@ const TaskNode = ({ id, data, selected }) => {
               backgroundColor: 'white',
               padding: '20px',
               borderRadius: '8px',
-              maxWidth: '500px',
-              maxHeight: '80vh',
+              minWidth: Math.min(400, window.innerWidth * 0.9) + 'px',
+              maxWidth: Math.min(600, window.innerWidth * 0.95) + 'px',
+              maxHeight: window.innerHeight * 0.9 + 'px',
               overflow: 'auto',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }} onClick={e => e.stopPropagation()}>
@@ -411,15 +423,17 @@ const TaskNode = ({ id, data, selected }) => {
                             linkNodes(id, node.id)
                             setShowLinking(false)
                           }}
+                          disabled={nodeRelationships[node.id]?.parent}
                           style={{
                             padding: '4px 8px',
-                            backgroundColor: '#28a745',
-                            color: 'white',
+                            backgroundColor: nodeRelationships[node.id]?.parent ? '#ccc' : '#28a745',
+                            color: nodeRelationships[node.id]?.parent ? '#666' : 'white',
                             border: 'none',
                             borderRadius: '3px',
-                            cursor: 'pointer',
+                            cursor: nodeRelationships[node.id]?.parent ? 'not-allowed' : 'pointer',
                             fontSize: '12px'
                           }}
+                          title={nodeRelationships[node.id]?.parent ? 'Cannot create sub-sub nodes' : 'Make this node a child'}
                         >
                           Make Child
                         </button>

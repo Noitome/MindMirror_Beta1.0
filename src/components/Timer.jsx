@@ -18,6 +18,11 @@ const Timer = ({ taskId, width, height }) => {
   const nodes = useMindMapStore(state => state.nodes)
   const tasks = useMindMapStore(state => state.tasks)
   const selectAggregatedTime = useMindMapStore(state => state.selectAggregatedTime)
+  const setPopupOpen = useMindMapStore(state => state.setPopupOpen)
+  
+  React.useEffect(() => {
+    setPopupOpen(showStopConfirm)
+  }, [showStopConfirm, setPopupOpen])
 
   useEffect(() => {
     let interval
@@ -139,7 +144,10 @@ const Timer = ({ taskId, width, height }) => {
             backgroundColor: 'white',
             padding: '20px',
             borderRadius: '8px',
-            maxWidth: '400px',
+            minWidth: Math.min(400, window.innerWidth * 0.9) + 'px',
+            maxWidth: Math.min(600, window.innerWidth * 0.95) + 'px',
+            maxHeight: window.innerHeight * 0.9 + 'px',
+            overflow: 'auto',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 15px 0' }}>Stop Main Node Timer</h3>
