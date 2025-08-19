@@ -312,7 +312,7 @@ const ListView = ({ showBackendData }) => {
       </div>
       
       <CrownAchievement alignmentScore={overallAlignment} />
-      <DamageEffect alignmentScore={overallAlignment} />
+      <DamageEffect overallAlignmentScore={overallAlignment} />
     </div>
   )
 }

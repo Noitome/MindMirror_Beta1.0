@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useMindMapStore } from '../store/mindMapStore'
 
-const DamageEffect = ({ alignmentScore }) => {
+const DamageEffect = ({ overallAlignmentScore }) => {
   const [effects, setEffects] = useState([])
   const [isBlurred, setIsBlurred] = useState(false)
   const [isPulsing, setIsPulsing] = useState(false)
@@ -10,10 +10,10 @@ const DamageEffect = ({ alignmentScore }) => {
   const damageEffects = useMindMapStore(state => state.damageEffects)
   
   useEffect(() => {
-    if (alignmentScore < 95 && alignmentScore !== null) {
-      triggerDamageEffect(alignmentScore)
+    if (overallAlignmentScore < 95 && overallAlignmentScore !== null) {
+      triggerDamageEffect(overallAlignmentScore)
     }
-  }, [alignmentScore, triggerDamageEffect])
+  }, [overallAlignmentScore, triggerDamageEffect])
   
   useEffect(() => {
     if (damageEffects.isActive) {
@@ -44,7 +44,7 @@ const DamageEffect = ({ alignmentScore }) => {
       
       clearDamageEffect()
     }
-  }, [damageEffects, alignmentScore, clearDamageEffect])
+  }, [damageEffects, overallAlignmentScore, clearDamageEffect])
   
   const addEffect = (intensity, duration) => {
     const effectId = Date.now() + Math.random()
