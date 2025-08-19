@@ -19,8 +19,118 @@ export const useMindMapStore = create((set, get) => ({
   nodeCreationTime: null,
   popupOpen: false,
   
+  user: null,
+  isAuthenticated: false,
+  isGuest: true,
+  syncStatus: 'idle', // 'idle', 'syncing', 'error', 'success'
+  syncError: null,
+  
   setPopupOpen: (isOpen) => {
     set({ popupOpen: isOpen })
+  },
+
+  setUser: (user) => {
+    set({ 
+      user, 
+      isAuthenticated: !!user, 
+      isGuest: !user 
+    })
+  },
+
+  setSyncStatus: (status, error = null) => {
+    set({ syncStatus: status, syncError: error })
+  },
+
+  login: async (provider, email = '', password = '') => {
+    set({ syncStatus: 'syncing' })
+    try {
+      const user = await persistence.login(provider, email, password)
+      set({ 
+        user, 
+        isAuthenticated: true, 
+        isGuest: false,
+        syncStatus: 'success'
+      })
+      
+      const state = get()
+      const localData = {
+        tasks: state.tasks,
+        nodes: state.nodes,
+        edges: state.edges,
+        nodeRelationships: state.nodeRelationships,
+        achievements: state.achievements,
+        goalCounter: state.goalCounter,
+        eventLog: eventLogger.exportEvents()
+      }
+      
+      const syncResult = await persistence.syncData(localData)
+      if (syncResult.synced && syncResult.data !== localData) {
+        set({
+          tasks: syncResult.data.tasks || {},
+          nodes: syncResult.data.nodes || [],
+          edges: syncResult.data.edges || [],
+          nodeRelationships: syncResult.data.nodeRelationships || {},
+          achievements: syncResult.data.achievements || {
+            crownCount: 0,
+            lastCrownTime: null,
+            crownColor: 'gold',
+            isPermanentBackground: false
+          },
+          goalCounter: syncResult.data.goalCounter || 0
+        })
+        
+        if (syncResult.data.eventLog) {
+          eventLogger.importEvents(syncResult.data.eventLog)
+        }
+      }
+      
+      return user
+    } catch (error) {
+      set({ syncStatus: 'error', syncError: error.message })
+      throw error
+    }
+  },
+
+  logout: async () => {
+    try {
+      await persistence.logout()
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isGuest: true,
+        syncStatus: 'idle',
+        syncError: null
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+      throw error
+    }
+  },
+
+  syncToCloud: async () => {
+    const state = get()
+    if (!state.isAuthenticated || !state.user) {
+      return
+    }
+
+    set({ syncStatus: 'syncing' })
+    try {
+      const saveData = {
+        tasks: state.tasks,
+        nodes: state.nodes,
+        edges: state.edges,
+        nodeRelationships: state.nodeRelationships,
+        achievements: state.achievements,
+        goalCounter: state.goalCounter,
+        eventLog: eventLogger.exportEvents()
+      }
+      
+      await persistence.saveCloud(state.user.uid, saveData)
+      set({ syncStatus: 'success' })
+    } catch (error) {
+      set({ syncStatus: 'error', syncError: error.message })
+      throw error
+    }
   },
 
   addNote: (taskId, content) => {
@@ -800,6 +910,16 @@ export const useMindMapStore = create((set, get) => ({
     
     try {
       await persistence.saveLocal(saveData)
+      
+      if (state.isAuthenticated && state.user && persistence.isOnline) {
+        try {
+          await persistence.saveCloud(state.user.uid, saveData)
+          set({ syncStatus: 'success' })
+        } catch (error) {
+          console.warn('Cloud sync failed:', error)
+          set({ syncStatus: 'error', syncError: error.message })
+        }
+      }
     } catch (error) {
       console.error('Failed to save state:', error)
     }
@@ -827,6 +947,55 @@ export const useMindMapStore = create((set, get) => ({
           eventLogger.importEvents(data.eventLog)
         }
       }
+
+      const unsubscribe = persistence.onAuthStateChanged((user) => {
+        set({ 
+          user, 
+          isAuthenticated: !!user, 
+          isGuest: !user 
+        })
+        
+        if (user) {
+          const state = get()
+          const localData = {
+            tasks: state.tasks,
+            nodes: state.nodes,
+            edges: state.edges,
+            nodeRelationships: state.nodeRelationships,
+            achievements: state.achievements,
+            goalCounter: state.goalCounter,
+            eventLog: eventLogger.exportEvents()
+          }
+          
+          persistence.syncData(localData).then(syncResult => {
+            if (syncResult.synced && syncResult.data !== localData) {
+              set({
+                tasks: syncResult.data.tasks || {},
+                nodes: syncResult.data.nodes || [],
+                edges: syncResult.data.edges || [],
+                nodeRelationships: syncResult.data.nodeRelationships || {},
+                achievements: syncResult.data.achievements || {
+                  crownCount: 0,
+                  lastCrownTime: null,
+                  crownColor: 'gold',
+                  isPermanentBackground: false
+                },
+                goalCounter: syncResult.data.goalCounter || 0,
+                syncStatus: 'success'
+              })
+              
+              if (syncResult.data.eventLog) {
+                eventLogger.importEvents(syncResult.data.eventLog)
+              }
+            }
+          }).catch(error => {
+            console.warn('Auto-sync failed:', error)
+            set({ syncStatus: 'error', syncError: error.message })
+          })
+        }
+      })
+
+      return unsubscribe
     } catch (error) {
       console.error('Failed to load state:', error)
     }
