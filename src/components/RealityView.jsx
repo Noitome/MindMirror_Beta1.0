@@ -4,6 +4,9 @@ import { useMindMapStore } from '../store/mindMapStore'
 const RealityView = () => {
   const canvasRef = useRef(null)
   const tasks = useMindMapStore(state => state.tasks)
+  const nodes = useMindMapStore(state => state.nodes)
+  const nodeRelationships = useMindMapStore(state => state.nodeRelationships)
+  const selectAggregatedTime = useMindMapStore(state => state.selectAggregatedTime)
 
   const formatDuration = (seconds) => {
     if (seconds < 3600) {
@@ -22,53 +25,104 @@ const RealityView = () => {
     }
   }
 
+  const getSubnodeColors = (mainNodeId) => {
+    const children = nodeRelationships[mainNodeId]?.children || []
+    const colors = []
+    
+    children.forEach((childId, index) => {
+      const hue = (index * 137.5) % 360
+      colors.push({
+        id: childId,
+        color: `hsl(${hue}, 70%, 60%)`,
+        time: tasks[childId]?.timeSpent || 0
+      })
+    })
+    
+    return colors
+  }
+
   useEffect(() => {
     const canvas = canvasRef.current
+    if (!canvas) return
+    
     const ctx = canvas.getContext('2d')
     const width = canvas.width
     const height = canvas.height
 
     ctx.clearRect(0, 0, width, height)
-    const totalTime = Object.values(tasks).reduce((sum, task) => sum + task.timeSpent, 0)
-    if (totalTime === 0) return
+    
+    const mainNodes = nodes.filter(node => !nodeRelationships[node.id]?.parent)
+    if (mainNodes.length === 0) return
+
+    const totalTime = mainNodes.reduce((sum, node) => sum + selectAggregatedTime(node.id), 0)
+    const fallbackTotalTime = mainNodes.reduce((sum, node) => sum + (tasks[node.id]?.timeSpent || 0), 0)
+    const displayTotalTime = Math.max(totalTime, fallbackTotalTime, mainNodes.length) // Ensure we show nodes even with zero time
 
     const centerX = width / 2
     const centerY = height / 2
     let angle = 0
-    const baseRadius = Math.min(width, height) * 0.3
+    const baseRadius = Math.min(width, height) * 0.25
 
-    Object.values(tasks).forEach(task => {
-      const timeRatio = task.timeSpent / totalTime
-      const radius = baseRadius * Math.sqrt(timeRatio) * 2
+    mainNodes.forEach(node => {
+      const task = tasks[node.id]
+      if (!task) return
       
-      // Calculate font size based on radius
-      const fontSize = Math.max(12, Math.min(radius * 0.3, 24))
-      const timeFontSize = Math.max(10, Math.min(radius * 0.25, 18))
+      const aggregatedTime = selectAggregatedTime(node.id)
+      const taskTime = tasks[node.id]?.timeSpent || 0
+      const displayTime = aggregatedTime > 0 ? aggregatedTime : taskTime
+      const timeRatio = displayTime / displayTotalTime
+      const radius = Math.max(30, baseRadius * Math.sqrt(timeRatio) * 2)
+      
+      const fontSize = Math.max(12, Math.min(radius * 0.25, 20))
+      const timeFontSize = Math.max(10, Math.min(radius * 0.2, 16))
 
-      const x = centerX + Math.cos(angle) * baseRadius
-      const y = centerY + Math.sin(angle) * baseRadius
+      const x = centerX + Math.cos(angle) * (baseRadius * 1.5)
+      const y = centerY + Math.sin(angle) * (baseRadius * 1.5)
 
-      // Draw circle
       ctx.beginPath()
       ctx.arc(x, y, radius, 0, Math.PI * 2)
-      ctx.fillStyle = `hsla(${Math.random() * 360}, 70%, 70%, 0.6)`
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
       ctx.fill()
       ctx.strokeStyle = '#333'
+      ctx.lineWidth = 2
       ctx.stroke()
+
+      const subnodeColors = getSubnodeColors(node.id)
+      const totalSubnodeTime = subnodeColors.reduce((sum, sub) => sum + sub.time, 0)
+      
+      if (totalSubnodeTime > 0) {
+        let bandAngle = 0
+        const bandWidth = 8
+        
+        subnodeColors.forEach(subnode => {
+          if (subnode.time > 0) {
+            const subnodeRatio = subnode.time / totalSubnodeTime
+            const arcLength = Math.PI * 2 * subnodeRatio
+            
+            ctx.beginPath()
+            ctx.arc(x, y, radius + bandWidth / 2, bandAngle, bandAngle + arcLength)
+            ctx.strokeStyle = subnode.color
+            ctx.lineWidth = bandWidth
+            ctx.stroke()
+            
+            bandAngle += arcLength
+          }
+        })
+      }
 
       // Draw task name
       ctx.fillStyle = '#000'
       ctx.font = `bold ${fontSize}px Arial`
       ctx.textAlign = 'center'
-      ctx.fillText(task.name, x, y)
+      ctx.fillText(task.name, x, y - 5)
       
       // Draw formatted duration
       ctx.font = `${timeFontSize}px Arial`
-      ctx.fillText(formatDuration(task.timeSpent), x, y + fontSize * 1.2)
+      ctx.fillText(formatDuration(Math.round(displayTime)), x, y + fontSize * 0.8)
       
-      angle += Math.PI * 2 / Object.keys(tasks).length
+      angle += Math.PI * 2 / mainNodes.length
     })
-  }, [tasks])
+  }, [tasks, nodes, nodeRelationships, selectAggregatedTime])
 
   const isMobile = window.innerWidth <= 768
   const canvasSize = isMobile ? Math.min(300, window.innerWidth - 40) : 600
