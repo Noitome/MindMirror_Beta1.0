@@ -17,6 +17,7 @@ const Timer = ({ taskId, width, height }) => {
   const nodeRelationships = useMindMapStore(state => state.nodeRelationships)
   const nodes = useMindMapStore(state => state.nodes)
   const tasks = useMindMapStore(state => state.tasks)
+  const selectAggregatedTime = useMindMapStore(state => state.selectAggregatedTime)
 
   useEffect(() => {
     let interval
@@ -88,7 +89,7 @@ const Timer = ({ taskId, width, height }) => {
         flexShrink: 1,
         lineHeight: 1
       }}>
-        {formatTime(task.timeSpent)}
+        {formatTime(isMainNode(taskId) ? selectAggregatedTime(taskId) : task.timeSpent)}
       </span>
       <button
         onClick={() => {
