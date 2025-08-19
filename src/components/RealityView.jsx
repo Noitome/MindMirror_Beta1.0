@@ -6,7 +6,6 @@ const RealityView = () => {
   const tasks = useMindMapStore(state => state.tasks)
   const nodes = useMindMapStore(state => state.nodes)
   const nodeRelationships = useMindMapStore(state => state.nodeRelationships)
-  const isMainNode = useMindMapStore(state => state.isMainNode)
   const selectAggregatedTime = useMindMapStore(state => state.selectAggregatedTime)
 
   const formatDuration = (seconds) => {
@@ -44,20 +43,20 @@ const RealityView = () => {
 
   useEffect(() => {
     const canvas = canvasRef.current
+    if (!canvas) return
+    
     const ctx = canvas.getContext('2d')
     const width = canvas.width
     const height = canvas.height
 
     ctx.clearRect(0, 0, width, height)
     
-    const mainNodes = nodes.filter(node => isMainNode(node.id))
+    const mainNodes = nodes.filter(node => !nodeRelationships[node.id]?.parent)
     if (mainNodes.length === 0) return
 
     const totalTime = mainNodes.reduce((sum, node) => sum + selectAggregatedTime(node.id), 0)
     const fallbackTotalTime = mainNodes.reduce((sum, node) => sum + (tasks[node.id]?.timeSpent || 0), 0)
-    const displayTotalTime = totalTime > 0 ? totalTime : fallbackTotalTime
-    
-    if (displayTotalTime === 0) return
+    const displayTotalTime = Math.max(totalTime, fallbackTotalTime, mainNodes.length) // Ensure we show nodes even with zero time
 
     const centerX = width / 2
     const centerY = height / 2
@@ -123,7 +122,7 @@ const RealityView = () => {
       
       angle += Math.PI * 2 / mainNodes.length
     })
-  }, [tasks, nodes, nodeRelationships, isMainNode, selectAggregatedTime])
+  }, [tasks, nodes, nodeRelationships, selectAggregatedTime])
 
   const isMobile = window.innerWidth <= 768
   const canvasSize = isMobile ? Math.min(300, window.innerWidth - 40) : 600
