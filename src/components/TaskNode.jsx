@@ -198,21 +198,26 @@ const TaskNode = ({ id, data, selected }) => {
           >
             Link
           </button>
-          <button 
-            onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
-            style={{
-              padding: '4px 8px',
-              fontSize: Math.max(8, (data.width || 200) * 0.03) + 'px',
-              backgroundColor: showDeleteConfirm ? '#dc3545' : '#f8f9fa',
-              color: showDeleteConfirm ? 'white' : '#dc3545',
-              border: '1px solid #dc3545',
-              borderRadius: '3px',
-              cursor: 'pointer'
-            }}
-          >
-            🗑️
-          </button>
         </div>
+        
+        {/* Delete button - positioned bottom left, half size */}
+        <button 
+          onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
+          style={{
+            position: 'absolute',
+            bottom: '5px',
+            left: '5px',
+            padding: '2px 4px',
+            fontSize: Math.max(6, (data.width || 200) * 0.015) + 'px',
+            backgroundColor: showDeleteConfirm ? '#dc3545' : '#f8f9fa',
+            color: showDeleteConfirm ? 'white' : '#dc3545',
+            border: '1px solid #dc3545',
+            borderRadius: '3px',
+            cursor: 'pointer'
+          }}
+        >
+          🗑️
+        </button>
         
         {/* Popup modals */}
         {showNotes && (

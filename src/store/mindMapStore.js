@@ -143,8 +143,7 @@ export const useMindMapStore = create((set, get) => ({
       }
       
       if (options && options.type) {
-        const { nodeRelationships } = state
-        const hasSubnodes = nodeRelationships[taskId]?.children?.length > 0
+        const hasSubnodes = state.nodeRelationships[taskId]?.children?.length > 0
         
         if (hasSubnodes && options.type === 'allocate_existing' && options.subnodeId) {
           const subnodeTask = updatedTasks[options.subnodeId]
