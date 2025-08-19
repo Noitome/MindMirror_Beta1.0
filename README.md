@@ -1,4 +1,4 @@
-# 🧠 MindMirror Alpha 1.0
+# 🧠 MindMirror Beta1.0 15.20 19/08/2025
 
 > **First Public Disclosure:** 2025-08-18 (AEST) • © 2025 Daniel • See [NOTICE](./NOTICE) & [COPYRIGHT.md](./COPYRIGHT.md)
 
