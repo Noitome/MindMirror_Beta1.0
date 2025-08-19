@@ -307,6 +307,57 @@ export const useMindMapStore = create((set, get) => ({
     })
   },
 
+  findEmptyPosition: (newWidth, newHeight, existingNodes) => {
+    const calculateOverlapPercentage = (rect1, rect2) => {
+      const overlapX = Math.max(0, Math.min(rect1.x + rect1.width, rect2.x + rect2.width) - Math.max(rect1.x, rect2.x))
+      const overlapY = Math.max(0, Math.min(rect1.y + rect1.height, rect2.y + rect2.height) - Math.max(rect1.y, rect2.y))
+      const overlapArea = overlapX * overlapY
+      const rect1Area = rect1.width * rect1.height
+      const rect2Area = rect2.width * rect2.height
+      const smallerArea = Math.min(rect1Area, rect2Area)
+      return smallerArea > 0 ? overlapArea / smallerArea : 0
+    }
+
+    const checkPosition = (x, y) => {
+      const newRect = { x, y, width: newWidth, height: newHeight }
+      
+      for (const node of existingNodes) {
+        const nodeRect = { 
+          x: node.position.x, 
+          y: node.position.y, 
+          width: node.data.width || 200, 
+          height: node.data.height || 150 
+        }
+        
+        if (calculateOverlapPercentage(newRect, nodeRect) > 0.15) {
+          return false
+        }
+      }
+      return true
+    }
+
+    const centerX = 200
+    const centerY = 150
+    const step = 50
+
+    if (checkPosition(centerX, centerY)) {
+      return { x: centerX, y: centerY }
+    }
+
+    for (let radius = 1; radius <= 20; radius++) {
+      for (let angle = 0; angle < 360; angle += 45) {
+        const x = centerX + Math.cos(angle * Math.PI / 180) * radius * step
+        const y = centerY + Math.sin(angle * Math.PI / 180) * radius * step
+        
+        if (checkPosition(x, y)) {
+          return { x, y }
+        }
+      }
+    }
+
+    return { x: Math.random() * 400, y: Math.random() * 300 }
+  },
+
   updateTaskSize: (taskId, width, height) => {
     set(state => {
       const calculateOverlapPercentage = (rect1, rect2) => {
@@ -324,29 +375,17 @@ export const useMindMapStore = create((set, get) => ({
 
       const newRect = { x: currentNode.position.x, y: currentNode.position.y, width, height }
       
-      const relationships = state.nodeRelationships[taskId]
-      const parentId = relationships?.parent
-      const siblings = parentId ? (state.nodeRelationships[parentId]?.children || []).filter(id => id !== taskId) : []
-      const children = relationships?.children || []
-      
-      for (const siblingId of siblings) {
-        const siblingNode = state.nodes.find(n => n.id === siblingId)
-        if (siblingNode) {
-          const siblingRect = { x: siblingNode.position.x, y: siblingNode.position.y, width: siblingNode.data.width, height: siblingNode.data.height }
-          const overlapPercentage = calculateOverlapPercentage(newRect, siblingRect)
-          if (overlapPercentage > 0.15) {
-            return state // Prevent update if overlap exceeds 15%
+      for (const otherNode of state.nodes) {
+        if (otherNode.id !== taskId) {
+          const otherRect = { 
+            x: otherNode.position.x, 
+            y: otherNode.position.y, 
+            width: otherNode.data.width || 200, 
+            height: otherNode.data.height || 150 
           }
-        }
-      }
-      
-      for (const childId of children) {
-        const childNode = state.nodes.find(n => n.id === childId)
-        if (childNode) {
-          const childRect = { x: childNode.position.x, y: childNode.position.y, width: childNode.data.width, height: childNode.data.height }
-          const overlapPercentage = calculateOverlapPercentage(newRect, childRect)
+          const overlapPercentage = calculateOverlapPercentage(newRect, otherRect)
           if (overlapPercentage > 0.15) {
-            return state // Prevent update if overlap exceeds 15%
+            return state
           }
         }
       }
@@ -477,11 +516,15 @@ export const useMindMapStore = create((set, get) => ({
       const goalName = `Goal ${state.goalCounter + 1}`
       const newTaskData = { ...taskData, name: goalName }
       
+      const newWidth = 200
+      const newHeight = 150
+      const position = state.findEmptyPosition(newWidth, newHeight, state.nodes)
+      
       const newNode = {
         id: taskData.id,
         type: 'task',
-        position: { x: Math.random() * 400, y: Math.random() * 300 },
-        data: { name: goalName, width: 200, height: 150 }
+        position,
+        data: { name: goalName, width: newWidth, height: newHeight }
       }
       
       return {
