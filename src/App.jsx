@@ -4,17 +4,27 @@
  * Licensed under MIT (see LICENSE). Non-code assets reserved.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import SingleScreenView from './components/SingleScreenView'
 import { useMindMapStore } from './store/mindMapStore'
 import { useViewportVar } from './lib/useViewportVar'
 import './App.css'
+
+const isAuthEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true'
+const AuthButton = isAuthEnabled ? React.lazy(() => import('./components/AuthButton')) : null
 
 function App() {
   useViewportVar();
   const addNode = useMindMapStore(state => state.addNode)
   const addTask = useMindMapStore(state => state.addTask)
   const exportData = useMindMapStore(state => state.exportData)
+  const loadState = useMindMapStore(state => state.loadState)
+  const isGuest = isAuthEnabled ? useMindMapStore(state => state.isGuest) : true
+  const syncStatus = isAuthEnabled ? useMindMapStore(state => state.syncStatus) : 'idle'
+
+  useEffect(() => {
+    loadState()
+  }, [])
 
   const addNewTask = () => {
     const id = Date.now().toString()
@@ -53,8 +63,14 @@ function App() {
         </div>
         <div style={{
           display: 'flex',
-          gap: window.innerWidth <= 768 ? '5px' : '10px'
+          gap: window.innerWidth <= 768 ? '5px' : '10px',
+          alignItems: 'center'
         }}>
+          {isAuthEnabled && AuthButton && (
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <AuthButton />
+            </React.Suspense>
+          )}
           <button 
             onClick={addNewTask}
             style={{
@@ -87,6 +103,25 @@ function App() {
           </button>
         </div>
       </div>
+
+      {isAuthEnabled && isGuest && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          color: '#856404',
+          padding: '8px 20px',
+          fontSize: '14px',
+          textAlign: 'center',
+          borderBottom: '1px solid #ffeaa7'
+        }}>
+          Guest Mode: Your data is saved locally only. 
+          <strong> Sign in to sync across devices.</strong>
+          {syncStatus === 'error' && (
+            <span style={{ color: '#dc3545', marginLeft: '10px' }}>
+              (Sync failed - check connection)
+            </span>
+          )}
+        </div>
+      )}
 
       <SingleScreenView />
       </div>

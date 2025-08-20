@@ -64,8 +64,30 @@ MindMirror solves this by creating **a living visual map** of your life — task
 - **Timers** – Subnode time rolls up to parent nodes.
 - **Alignment Score** – Updated dynamically.
 - **Combined View** – Unified perspective.
+- **Optional Authentication** – Cross-device sync with multiple OAuth providers.
 
 > 🚨 **Non-negotiable:** These baseline features must never be deleted or altered in ways that remove functionality. Future iterations must **only add** features, not subtract.
+
+## 🔐 Authentication & Security
+
+### OAuth Scopes (Minimal Required)
+- **Google**: `email`, `profile`
+- **Facebook**: `email`
+- **GitHub**: `user:email`
+- **Microsoft**: `mail.read`, `user.read`
+- **LinkedIn**: Default profile scope
+
+### Token Storage
+- ID tokens stored in memory where possible
+- Refresh tokens managed by Firebase Auth in IndexedDB with scoped access
+- No tokens or PII logged in console
+- Automatic token refresh handled by Firebase SDK
+- Sign-out clears all in-memory caches and refresh tokens
+
+### Privacy
+- Only minimal scopes requested for basic profile/email access
+- User data stored locally-first with optional cloud sync
+- No analytics or tracking beyond authentication events
 
 ---
 
@@ -99,15 +121,35 @@ MindMirror solves this by creating **a living visual map** of your life — task
 
 ---
 
-## 📦 Installation
+## 📦 Installation & Local Development
 
+### Basic Setup (Authentication Disabled)
 ```bash
-git clone https://github.com/Noitome/Mindmap-App.git
-cd Mindmap-App
-cp .env.example .env   # leave empty to use local fallback; or add DB keys
+git clone https://github.com/Noitome/MindMirror_Beta1.0.git
+cd MindMirror_Beta1.0
 npm ci
-npm run dev
+npm run dev -- --host 0.0.0.0 --port 5173
 # Preview: http://localhost:5173
+```
+
+### With Authentication Enabled
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and set:
+# VITE_AUTH_ENABLED=true
+# VITE_FIREBASE_API_KEY=your_api_key
+# VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+# VITE_FIREBASE_PROJECT_ID=your-project-id
+# (other Firebase config values)
+
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+### Testing
+```bash
+npm test  # Run all tests including persistence adapter tests
 ```
 
 ---
