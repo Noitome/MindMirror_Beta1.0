@@ -11,9 +11,13 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import TaskNode from './TaskNode'
 import { useMindMapStore } from '../store/mindMapStore'
+import RoutedEdge from './edges/RoutedEdge'
 
 const nodeTypes = {
   task: TaskNode
+}
+const edgeTypes = {
+  routed: RoutedEdge
 }
 const MindMapContent = () => {
   const allNodes = useMindMapStore(state => state.nodes)
@@ -203,6 +207,7 @@ const MindMapContent = () => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         className="mm-full"
         style={{ width: '100%', height: '100%' }}
         fitView
@@ -211,14 +216,15 @@ const MindMapContent = () => {
         defaultEdgeOptions={{
           style: {
             stroke: 'var(--mm-color-edge)',
-            strokeWidth: 2
+            strokeWidth: 2,
+            opacity: 0.75
           },
-          type: 'smoothstep'
+          type: 'routed'
         }}
         connectionLineStyle={{
-          stroke: '#007bff',
+          stroke: 'var(--mm-color-edge)',
           strokeWidth: 3,
-          strokeDasharray: '5,5'
+          strokeDasharray: '6,6'
         }}
       >
         <Background />

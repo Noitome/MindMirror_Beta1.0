@@ -66,6 +66,11 @@ export const useMindMapStore = create((set, get) => ({
     return total
   },
 
+  selectHasNonTrivialTime: (minMs = 60000) => {
+    const total = get().selectTotalTrackedMs()
+    return total >= minMs
+  },
+
   showAlignmentFeedback: () => {
     const { alignmentFeedbackThresholdMs } = get()
     const total = get().selectTotalTrackedMs()

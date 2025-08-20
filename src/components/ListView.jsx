@@ -16,14 +16,15 @@ const ListView = ({ showBackendData }) => {
   const overallAlignment = selectOverallAlignment()
   
   const showAlignmentFeedback = useMindMapStore(state => state.showAlignmentFeedback)
+  const hasNonTrivialTime = useMindMapStore(state => state.selectHasNonTrivialTime ? state.selectHasNonTrivialTime(60000) : false)
   useEffect(() => {
     updateAchievements(overallAlignment)
-    if (!showAlignmentFeedback()) return
+    if (!showAlignmentFeedback() || !hasNonTrivialTime) return
 
     if (overallAlignment < 95) {
       triggerDamageEffect(overallAlignment)
     }
-  }, [overallAlignment, updateAchievements, triggerDamageEffect])
+  }, [overallAlignment, updateAchievements, triggerDamageEffect, showAlignmentFeedback, hasNonTrivialTime])
 
   const taskList = useMemo(() => {
     // Create array of tasks with their bounding box size data
@@ -146,7 +147,7 @@ const ListView = ({ showBackendData }) => {
               {taskList.map((task, index) => {
                 const nodeRelationships = useMindMapStore.getState().nodeRelationships
                 const isSubnode = nodeRelationships[task.id]?.parent
-                const indentLevel = isSubnode ? 1 : 0
+                const indentLevel = useMindMapStore.getState().selectDepth(task.id)
                 
                 return (
                 <div key={task.id} style={{
@@ -158,7 +159,7 @@ const ListView = ({ showBackendData }) => {
                   minHeight: isMobile ? '60px' : 'auto',
                   marginLeft: `${indentLevel * 1.25}rem`,
                   width: `calc(100% - ${indentLevel * 1.25}rem)`,
-                  borderLeft: isSubnode ? '4px solid #007bff' : '1px solid #dee2e6'
+                  borderLeft: isSubnode ? `4px solid rgba(0, 123, 255, ${Math.min(0.2 + 0.1 * indentLevel, 0.7)})` : '1px solid #dee2e6'
                 }}>
                   <div style={{
                     display: 'flex',
