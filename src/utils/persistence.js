@@ -1,5 +1,5 @@
 import { get as idbGet, set as idbSet, keys as idbKeys } from 'idb-keyval'
-import { auth, db, isFirebaseConfigured } from './firebase.js'
+import { auth, db, isFirebaseConfigured, isAuthEnabled } from './firebase.js'
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -18,19 +18,21 @@ const STORAGE_KEY = 'mindmirror_state'
 
 export class PersistenceAdapter {
   constructor() {
-    this.isOnline = navigator.onLine
+    this.isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
     this.user = null
     this.authStateListeners = []
     
-    window.addEventListener('online', () => {
-      this.isOnline = true
-    })
-    
-    window.addEventListener('offline', () => {
-      this.isOnline = false
-    })
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        this.isOnline = true
+      })
+      
+      window.addEventListener('offline', () => {
+        this.isOnline = false
+      })
+    }
 
-    if (isFirebaseConfigured && auth) {
+    if (isAuthEnabled && isFirebaseConfigured && auth) {
       onAuthStateChanged(auth, (user) => {
         this.user = user
         this.authStateListeners.forEach(listener => listener(user))
@@ -39,6 +41,9 @@ export class PersistenceAdapter {
   }
 
   onAuthStateChanged(callback) {
+    if (!isAuthEnabled) {
+      return () => {}
+    }
     this.authStateListeners.push(callback)
     return () => {
       this.authStateListeners = this.authStateListeners.filter(l => l !== callback)
@@ -96,6 +101,9 @@ export class PersistenceAdapter {
   }
   
   async login(provider = 'email', email = '', password = '') {
+    if (!isAuthEnabled) {
+      throw new Error('Authentication is disabled. Set VITE_AUTH_ENABLED=true to enable authentication.')
+    }
     if (!isFirebaseConfigured || !auth) {
       throw new Error('Firebase not configured. Please set up environment variables.')
     }
@@ -163,6 +171,10 @@ export class PersistenceAdapter {
   }
 
   async logout() {
+    if (!isAuthEnabled) {
+      this.user = null
+      return
+    }
     if (!isFirebaseConfigured || !auth) {
       this.user = null
       return
@@ -178,6 +190,9 @@ export class PersistenceAdapter {
   }
   
   async getUser() {
+    if (!isAuthEnabled) {
+      return null
+    }
     if (isFirebaseConfigured && auth) {
       return auth.currentUser || this.user
     }
@@ -185,7 +200,7 @@ export class PersistenceAdapter {
   }
   
   async loadCloud(userId) {
-    if (!isFirebaseConfigured || !db || !userId) {
+    if (!isAuthEnabled || !isFirebaseConfigured || !db || !userId) {
       return null
     }
     
@@ -208,6 +223,9 @@ export class PersistenceAdapter {
   }
   
   async saveCloud(userId, data) {
+    if (!isAuthEnabled) {
+      throw new Error('Authentication is disabled. Set VITE_AUTH_ENABLED=true to enable cloud sync.')
+    }
     if (!isFirebaseConfigured || !db || !userId) {
       throw new Error('Firebase not configured or user not authenticated')
     }

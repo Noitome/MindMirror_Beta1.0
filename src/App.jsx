@@ -6,10 +6,12 @@
 
 import React, { useState, useEffect } from 'react'
 import SingleScreenView from './components/SingleScreenView'
-import AuthButton from './components/AuthButton'
 import { useMindMapStore } from './store/mindMapStore'
 import { useViewportVar } from './lib/useViewportVar'
 import './App.css'
+
+const isAuthEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true'
+const AuthButton = isAuthEnabled ? React.lazy(() => import('./components/AuthButton')) : null
 
 function App() {
   useViewportVar();
@@ -17,8 +19,8 @@ function App() {
   const addTask = useMindMapStore(state => state.addTask)
   const exportData = useMindMapStore(state => state.exportData)
   const loadState = useMindMapStore(state => state.loadState)
-  const isGuest = useMindMapStore(state => state.isGuest)
-  const syncStatus = useMindMapStore(state => state.syncStatus)
+  const isGuest = isAuthEnabled ? useMindMapStore(state => state.isGuest) : true
+  const syncStatus = isAuthEnabled ? useMindMapStore(state => state.syncStatus) : 'idle'
 
   useEffect(() => {
     loadState()
@@ -64,7 +66,11 @@ function App() {
           gap: window.innerWidth <= 768 ? '5px' : '10px',
           alignItems: 'center'
         }}>
-          <AuthButton />
+          {isAuthEnabled && AuthButton && (
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <AuthButton />
+            </React.Suspense>
+          )}
           <button 
             onClick={addNewTask}
             style={{
@@ -98,7 +104,7 @@ function App() {
         </div>
       </div>
 
-      {isGuest && (
+      {isAuthEnabled && isGuest && (
         <div style={{
           backgroundColor: '#fff3cd',
           color: '#856404',

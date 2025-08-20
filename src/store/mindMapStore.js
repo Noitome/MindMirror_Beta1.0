@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import { rollUpAllAncestors } from '../utils/rollup.js'
 import { persistence } from '../utils/persistence.js'
 import { eventLogger, logTimerStart, logTimerStop, logAlignmentChange, logNodeMove, logNodeCreate, logNodeLink } from '../utils/eventLogger.js'
+import { isAuthEnabled } from '../utils/firebase.js'
 
 export const useMindMapStore = create((set, get) => ({
   nodes: [],
@@ -22,7 +23,7 @@ export const useMindMapStore = create((set, get) => ({
   user: null,
   isAuthenticated: false,
   isGuest: true,
-  syncStatus: 'idle', // 'idle', 'syncing', 'error', 'success'
+  syncStatus: 'idle',
   syncError: null,
   
   setPopupOpen: (isOpen) => {
@@ -30,6 +31,10 @@ export const useMindMapStore = create((set, get) => ({
   },
 
   setUser: (user) => {
+    if (!isAuthEnabled) {
+      set({ user: null, isAuthenticated: false, isGuest: true })
+      return
+    }
     set({ 
       user, 
       isAuthenticated: !!user, 
@@ -42,6 +47,9 @@ export const useMindMapStore = create((set, get) => ({
   },
 
   login: async (provider, email = '', password = '') => {
+    if (!isAuthEnabled) {
+      throw new Error('Authentication is disabled. Set VITE_AUTH_ENABLED=true to enable authentication.')
+    }
     set({ syncStatus: 'syncing' })
     try {
       const user = await persistence.login(provider, email, password)
@@ -92,6 +100,9 @@ export const useMindMapStore = create((set, get) => ({
   },
 
   logout: async () => {
+    if (!isAuthEnabled) {
+      return
+    }
     try {
       await persistence.logout()
       set({ 
@@ -108,6 +119,9 @@ export const useMindMapStore = create((set, get) => ({
   },
 
   syncToCloud: async () => {
+    if (!isAuthEnabled) {
+      return
+    }
     const state = get()
     if (!state.isAuthenticated || !state.user) {
       return
@@ -948,7 +962,7 @@ export const useMindMapStore = create((set, get) => ({
         }
       }
 
-      const unsubscribe = persistence.onAuthStateChanged((user) => {
+      const unsubscribe = isAuthEnabled ? persistence.onAuthStateChanged((user) => {
         set({ 
           user, 
           isAuthenticated: !!user, 
@@ -993,7 +1007,7 @@ export const useMindMapStore = create((set, get) => ({
             set({ syncStatus: 'error', syncError: error.message })
           })
         }
-      })
+      }) : () => {}
 
       return unsubscribe
     } catch (error) {
