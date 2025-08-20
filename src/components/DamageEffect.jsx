@@ -8,12 +8,14 @@ const DamageEffect = ({ overallAlignmentScore }) => {
   const triggerDamageEffect = useMindMapStore(state => state.triggerDamageEffect)
   const clearDamageEffect = useMindMapStore(state => state.clearDamageEffect)
   const damageEffects = useMindMapStore(state => state.damageEffects)
+  const showAlignmentFeedback = useMindMapStore(state => state.showAlignmentFeedback)
   
   useEffect(() => {
+    if (!showAlignmentFeedback()) return
     if (overallAlignmentScore < 95 && overallAlignmentScore !== null) {
       triggerDamageEffect(overallAlignmentScore)
     }
-  }, [overallAlignmentScore, triggerDamageEffect])
+  }, [overallAlignmentScore, triggerDamageEffect, showAlignmentFeedback])
   
   useEffect(() => {
     if (damageEffects.isActive) {
