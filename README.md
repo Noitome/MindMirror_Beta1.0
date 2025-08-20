@@ -128,8 +128,8 @@ MindMirror solves this by creating **a living visual map** of your life — task
 git clone https://github.com/Noitome/MindMirror_Beta1.0.git
 cd MindMirror_Beta1.0
 npm ci
-npm run dev -- --host 0.0.0.0 --port 5173
-# Preview: http://localhost:5173
+npm run dev -- --host 0.0.0.0 --port 3000
+# Preview: http://localhost:3000
 ```
 
 ### With Authentication Enabled
@@ -144,7 +144,7 @@ cp .env.example .env
 # VITE_FIREBASE_PROJECT_ID=your-project-id
 # (other Firebase config values)
 
-npm run dev -- --host 0.0.0.0 --port 5173
+npm run dev -- --host 0.0.0.0 --port 3000
 ### With Supabase (Recommended)
 ```bash
 cp .env.example .env
@@ -154,7 +154,7 @@ cp .env.example .env
 # VITE_SUPABASE_URL=your_supabase_url
 # VITE_SUPABASE_ANON_KEY=your_anon_key
 
-npm run dev -- --host 0.0.0.0 --port 5173
+npm run dev -- --host 0.0.0.0 --port 3000
 ```
 
 ### PWA Install
