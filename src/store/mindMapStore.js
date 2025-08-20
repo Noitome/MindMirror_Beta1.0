@@ -408,6 +408,8 @@ export const useMindMapStore = create((set, get) => ({
             runningInterval: null,
             lastWorkedOn: now
           }
+          
+          return { tasks: updatedTasks }
         } else if (hasSubnodes && options.type === 'create_new' && options.newSubnodeName) {
           // Create new subnode and allocate time to it
           const newSubnodeId = `node_${Date.now()}`
@@ -459,6 +461,8 @@ export const useMindMapStore = create((set, get) => ({
             lastWorkedOn: now
           }
         }
+        
+        return { tasks: updatedTasks }
       } else {
         updatedTasks[taskId] = {
           ...task,

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useMindMapStore } from '../store/mindMapStore'
 
-const RealityView = () => {
+const RealityView = ({ isStandalone = false }) => {
   const canvasRef = useRef(null)
   const tasks = useMindMapStore(state => state.tasks)
   const nodes = useMindMapStore(state => state.nodes)
@@ -76,8 +76,10 @@ const RealityView = () => {
       const fontSize = Math.max(12, Math.min(radius * 0.25, 20))
       const timeFontSize = Math.max(10, Math.min(radius * 0.2, 16))
 
-      const x = centerX + Math.cos(angle) * (baseRadius * 1.5)
-      const y = centerY + Math.sin(angle) * (baseRadius * 1.5)
+      const maxDistance = Math.min(width, height) * 0.4 - radius
+      const distance = Math.min(baseRadius * 1.5, maxDistance)
+      const x = centerX + Math.cos(angle) * distance
+      const y = centerY + Math.sin(angle) * distance
 
       ctx.beginPath()
       ctx.arc(x, y, radius, 0, Math.PI * 2)
@@ -125,7 +127,9 @@ const RealityView = () => {
   }, [tasks, nodes, nodeRelationships, selectAggregatedTime])
 
   const isMobile = window.innerWidth <= 768
-  const canvasSize = isMobile ? Math.min(300, window.innerWidth - 40) : 600
+  const canvasSize = isStandalone 
+    ? (isMobile ? Math.min(window.innerWidth - 20, window.innerHeight - 100) : Math.min(window.innerWidth - 100, window.innerHeight - 150))
+    : (isMobile ? Math.min(300, window.innerWidth - 40) : 400)
 
   return (
     <div className="mm-full" style={{
@@ -133,7 +137,18 @@ const RealityView = () => {
       alignItems: 'center',
       justifyContent: 'center',
       boxSizing: 'border-box',
-      padding: isMobile ? '10px' : '20px'
+      padding: isMobile ? '5px' : '10px',
+      ...(isStandalone ? {
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 1
+      } : {
+        width: '100%',
+        height: '100%'
+      })
     }}>
       <div style={{ 
         width: '100%', 
