@@ -1,4 +1,38 @@
 :root {
+  --mm-color-primary: #4F46E5;
+  --mm-color-secondary: #06B6D4;
+  --mm-color-accent: #F97316;
+  --mm-color-success: #22C55E;
+  --mm-color-warning: #F59E0B;
+  --mm-color-danger: #EF4444;
+  --mm-color-rail: #e0e0e0;
+  --mm-color-edge: #007bff;
+
+  --mm-neutral-0: #ffffff;
+  --mm-neutral-50: #f9fafb;
+  --mm-neutral-100: #f3f4f6;
+  --mm-neutral-200: #e5e7eb;
+  --mm-neutral-300: #d1d5db;
+  --mm-neutral-600: #4b5563;
+  --mm-neutral-900: #111827;
+
+  --mm-font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --mm-font-size-sm: 12px;
+  --mm-font-size-md: 14px;
+  --mm-font-size-lg: 16px;
+  --mm-font-size-xl: 20px;
+  --mm-radius-sm: 6px;
+  --mm-radius-md: 8px;
+  --mm-radius-lg: 12px;
+  --mm-shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+  --mm-shadow-md: 0 4px 8px rgba(0,0,0,0.12);
+  --mm-space-1: 4px;
+  --mm-space-2: 8px;
+  --mm-space-3: 12px;
+  --mm-space-4: 16px;
+  --mm-space-6: 24px;
+}
+:root {
   --primary-color: #4CAF50;
   --secondary-color: #f0f0f0;
 }

@@ -26,6 +26,110 @@ export const useMindMapStore = create((set, get) => ({
   syncStatus: 'idle',
   syncError: null,
   
+  alignmentFeedbackThresholdMs: 300000,
+  collapsed: {},
+
+  selectDepth: (nodeId) => {
+    const { nodeRelationships } = get()
+    let depth = 0
+    let current = nodeId
+    while (nodeRelationships[current]?.parent) {
+      depth += 1
+      current = nodeRelationships[current].parent
+    }
+    return depth
+  },
+
+  selectLastTrackedTaskId: () => {
+    const { tasks } = get()
+    let lastId = null
+    let lastTime = -1
+    Object.values(tasks).forEach(t => {
+      const tLast = t.lastWorkedOn || 0
+      if (tLast > lastTime) {
+        lastTime = tLast
+        lastId = t.id
+      }
+    })
+    return lastId
+  },
+
+  selectTotalTrackedMs: () => {
+    const { tasks } = get()
+    let total = 0
+    Object.values(tasks).forEach(t => {
+      total += (t.timeSpent || 0) * 1000
+      if (t.isRunning && t.runningInterval?.start) {
+        total += (Date.now() - t.runningInterval.start)
+      }
+    })
+    return total
+  },
+
+  showAlignmentFeedback: () => {
+    const { alignmentFeedbackThresholdMs } = get()
+    const total = get().selectTotalTrackedMs()
+    return total >= alignmentFeedbackThresholdMs
+  },
+
+  toggleCollapse: (nodeId) => {
+    set(state => ({
+      collapsed: {
+        ...state.collapsed,
+        [nodeId]: !state.collapsed[nodeId]
+      }
+    }))
+  },
+
+  selectVisibleNodes: () => {
+    const { nodes, nodeRelationships, collapsed } = get()
+    const isHiddenByAncestor = (id) => {
+      let current = id
+      while (nodeRelationships[current]?.parent) {
+        const parent = nodeRelationships[current].parent
+        if (collapsed[parent]) return true
+        current = parent
+      }
+      return false
+    }
+    return nodes.filter(n => !isHiddenByAncestor(n.id))
+  },
+
+  selectVisibleEdges: () => {
+    const { edges } = get()
+    const visibleIds = new Set(get().selectVisibleNodes().map(n => n.id))
+    return edges.filter(e => visibleIds.has(e.source) && visibleIds.has(e.target))
+  },
+
+  initializeVisibilityOnResume: () => {
+    const state = get()
+    const lastId = state.selectLastTrackedTaskId()
+    const collapsed = {}
+
+    Object.keys(state.nodeRelationships).forEach(id => {
+      const rel = state.nodeRelationships[id]
+      if (rel?.parent) {
+        collapsed[rel.parent] = collapsed[rel.parent] || false
+      }
+    })
+    Object.keys(state.nodeRelationships).forEach(id => {
+      const rel = state.nodeRelationships[id]
+      if (rel?.children?.length) {
+        collapsed[id] = true
+      }
+    })
+
+    if (lastId && state.nodeRelationships[lastId]?.parent) {
+      let current = lastId
+      while (state.nodeRelationships[current]?.parent) {
+        const parent = state.nodeRelationships[current].parent
+        collapsed[parent] = false
+        current = parent
+      }
+    }
+
+    set({ collapsed })
+  },
   setPopupOpen: (isOpen) => {
     set({ popupOpen: isOpen })
   },

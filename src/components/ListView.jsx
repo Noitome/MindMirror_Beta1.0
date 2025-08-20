@@ -15,8 +15,11 @@ const ListView = ({ showBackendData }) => {
   
   const overallAlignment = selectOverallAlignment()
   
+  const showAlignmentFeedback = useMindMapStore(state => state.showAlignmentFeedback)
   useEffect(() => {
     updateAchievements(overallAlignment)
+    if (!showAlignmentFeedback()) return
+
     if (overallAlignment < 95) {
       triggerDamageEffect(overallAlignment)
     }
@@ -213,6 +216,13 @@ const ListView = ({ showBackendData }) => {
                         fontSize: isMobile ? '13px' : '14px'
                       }}>
                         {formatDuration(task.timeSpent)}
+                      <div style={{
+                        color: showAlignmentFeedback() ? getAlignmentColor(task.alignmentScore) : '#666',
+                        fontWeight: 'bold',
+                        fontSize: isMobile ? '12px' : '14px'
+                      }}>
+                        {showAlignmentFeedback() ? `${task.alignmentScore}% aligned` : 'Alignment pending'}
+                      </div>
                       </div>
                       <div style={{
                         color: getAlignmentColor(task.alignmentScore),
@@ -267,7 +277,7 @@ const ListView = ({ showBackendData }) => {
             <div style={{
               fontSize: `${relativeFontSize}px`,
               fontWeight: 'bold',
-              color: getAlignmentColor(totalAlignmentScore),
+              color: showAlignmentFeedback() ? getAlignmentColor(totalAlignmentScore) : '#333',
               lineHeight: 1,
               display: 'flex',
               alignItems: 'center',
@@ -304,8 +314,8 @@ const ListView = ({ showBackendData }) => {
         }}>
           <div style={{
             height: '100%',
+            backgroundColor: showAlignmentFeedback() ? getAlignmentColor(totalAlignmentScore) : '#bbb',
             width: `${Math.min(100, totalAlignmentScore)}%`,
-            backgroundColor: getAlignmentColor(totalAlignmentScore),
             transition: 'width 0.3s ease'
           }} />
         </div>

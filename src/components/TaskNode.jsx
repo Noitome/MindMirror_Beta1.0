@@ -35,6 +35,11 @@ const TaskNode = ({ id, data, selected }) => {
     updateTaskName(id, e.target.value)
   }
 
+  const depth = data.depth || 0
+  const railWidth = 3
+  const rails = Array.from({ length: Math.min(depth, 6) })
+  const railColor = 'var(--mm-color-rail)'
+
   const dynamicStyles = useMemo(() => {
     const width = data.width || 200
     const height = data.height || 150
@@ -68,6 +73,12 @@ const TaskNode = ({ id, data, selected }) => {
   return (
     <div 
       className="task-node" 
+      onDoubleClick={() => {
+        const hasChildren = (nodeRelationships[id]?.children || []).length > 0
+        if (hasChildren) {
+          useMindMapStore.getState().toggleCollapse(id)
+        }
+      }}
       style={{ 
         width: '100%', 
         height: '100%',
@@ -96,13 +107,65 @@ const TaskNode = ({ id, data, selected }) => {
         }}
       />
       <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Bottom} />
+      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Right} />
+      <Handle type="source" position={Position.Top} />
+      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
       <div 
         className="task-content" 
         style={{ 
           width: '100%', 
           textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingLeft: `${Math.min(8 * (depth || 0), 32)}px`
         }}
       >
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: `${railWidth * Math.min(depth, 6)}px`,
+          display: 'flex',
+          gap: '1px',
+          paddingLeft: '2px'
+        }}>
+          {rails.map((_, i) => (
+            <div key={i} style={{ width: `${railWidth}px`, background: railColor, opacity: 0.25 + i * 0.1 }} />
+          ))}
+        </div>
+        <div style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 2 }}>
+          {(() => {
+            const children = nodeRelationships[id]?.children || []
+            const hasChildren = children.length > 0
+            if (!hasChildren) return null
+            const collapsed = useMindMapStore.getState().collapsed[id]
+            return (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  useMindMapStore.getState().toggleCollapse(id)
+                }}
+                title={collapsed ? 'Expand' : 'Collapse'}
+                style={{
+                  padding: '2px 6px',
+                  fontSize: Math.max(10, (data.width || 200) * 0.035) + 'px',
+                  border: '1px solid #999',
+                  borderRadius: '4px',
+                  background: '#f6f6f6',
+                  cursor: 'pointer'
+                }}
+              >
+                {collapsed ? '▸' : '▾'} {children.length}
+              </button>
+            )
+          })()}
+        </div>
         <div className="task-metadata" style={{
           position: 'absolute',
           top: '5px',
@@ -596,7 +659,6 @@ const TaskNode = ({ id, data, selected }) => {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} />
     </div>
   )
 }
