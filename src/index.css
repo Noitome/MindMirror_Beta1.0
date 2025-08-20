@@ -188,10 +188,6 @@ h2 {
 
 .task-node {
   transition: all 0.2s ease;
-.task-node.entering { opacity: 0.01; transform: translateY(-4px); }
-.task-node.entered { opacity: 1; transform: translateY(0); transition: opacity 180ms ease, transform 180ms ease; }
-.task-node.exiting { opacity: 0.01; transform: translateY(2px); transition: opacity 140ms ease, transform 140ms ease; }
-
 }
 
 .task-name {
@@ -211,3 +207,7 @@ h2 {
   padding: 5px 10px;
   font-size: 0.8em;
 }
+.mm-edge-path { stroke-dasharray: none; transition: stroke 200ms ease, stroke-width 200ms ease, opacity 200ms ease; }
+.mm-edge-path:hover { opacity: 1; }
+.mm-edge-path.is-hovering { stroke-dasharray: 6 6; animation: mm-dash-move 1s linear infinite; }
+@keyframes mm-dash-move { to { stroke-dashoffset: -12; } }
