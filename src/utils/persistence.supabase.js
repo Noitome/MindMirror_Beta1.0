@@ -128,7 +128,7 @@ export class SupabasePersistenceAdapter {
       .select('data, last_saved_at')
       .eq('id', userId)
       .single()
-    if (error && error.code !== 'PGRST116') throw error
+    if (error && !['PGRST116', '42P01'].includes(error.code)) throw error
     if (!data) return null
     const payload = data.data || null
     if (payload?.appVersion && payload.appVersion !== CURRENT_SCHEMA_VERSION) {
