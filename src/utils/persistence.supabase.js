@@ -16,10 +16,12 @@ export class SupabasePersistenceAdapter {
     }
     if (isAuthEnabled && isSupabaseConfigured && supabase) {
       supabase.auth.getUser().then(({ data }) => {
-        this.user = data?.user || null
+        const u = data?.user || null
+        this.user = u ? { ...u, uid: u.id } : null
       })
       this._sub = supabase.auth.onAuthStateChange((_event, session) => {
-        this.user = session?.user || null
+        const u = session?.user || null
+        this.user = u ? { ...u, uid: u.id } : null
         this.authStateListeners.forEach(l => l(this.user))
       })
     }
@@ -78,11 +80,15 @@ export class SupabasePersistenceAdapter {
       if (signInError) {
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password })
         if (signUpError) throw signUpError
-        this.user = signUpData.user
+        const u = signUpData.user
+        this.user = u ? { ...u, uid: u.id } : null
         return this.user
       }
-      this.user = signInData.user
-      return this.user
+      {
+        const u = signInData.user
+        this.user = u ? { ...u, uid: u.id } : null
+        return this.user
+      }
     }
 
     const providerMap = {
@@ -111,7 +117,8 @@ export class SupabasePersistenceAdapter {
     if (!isAuthEnabled) return null
     if (!isSupabaseConfigured || !supabase) return this.user
     const { data } = await supabase.auth.getUser()
-    return data?.user || this.user
+    const u = data?.user || this.user
+    return u ? { ...u, uid: u.id } : null
   }
 
   async loadCloud(userId) {
