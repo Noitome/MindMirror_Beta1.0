@@ -15,12 +15,15 @@ import { useMindMapStore } from '../store/mindMapStore'
 const nodeTypes = {
   task: TaskNode
 }
-
 const MindMapContent = () => {
-  const nodes = useMindMapStore(state => state.nodes)
-  const edges = useMindMapStore(state => state.edges)
+  const allNodes = useMindMapStore(state => state.nodes)
+  const allEdges = useMindMapStore(state => state.edges)
   const updateNodes = useMindMapStore(state => state.updateNodes)
   const updateEdges = useMindMapStore(state => state.updateEdges)
+  const selectVisibleNodes = useMindMapStore(state => state.selectVisibleNodes)
+  const selectVisibleEdges = useMindMapStore(state => state.selectVisibleEdges)
+  const selectDepth = useMindMapStore(state => state.selectDepth)
+  const initializeVisibilityOnResume = useMindMapStore(state => state.initializeVisibilityOnResume)
   const updateTaskSize = useMindMapStore(state => state.updateTaskSize)
   const linkNodes = useMindMapStore(state => state.linkNodes)
   const addNode = useMindMapStore(state => state.addNode)
@@ -32,7 +35,7 @@ const MindMapContent = () => {
 
   const onNodesChange = useCallback(
     (changes) => {
-      const updatedNodes = applyNodeChanges(changes, nodes)
+      const updatedNodes = applyNodeChanges(changes, allNodes)
       
       // Check for dimension changes
       changes.forEach(change => {
@@ -43,15 +46,15 @@ const MindMapContent = () => {
       
       updateNodes(updatedNodes)
     },
-    [nodes, updateNodes, updateTaskSize]
+    [allNodes, updateNodes, updateTaskSize]
   )
 
   const onEdgesChange = useCallback(
     (changes) => {
-      const updatedEdges = applyEdgeChanges(changes, edges)
+      const updatedEdges = applyEdgeChanges(changes, allEdges)
       updateEdges(updatedEdges)
     },
-    [edges, updateEdges]
+    [allEdges, updateEdges]
   )
 
   const onConnect = useCallback(
@@ -63,6 +66,13 @@ const MindMapContent = () => {
     [linkNodes]
   )
 
+  useEffect(() => {
+    try {
+      initializeVisibilityOnResume()
+    } catch (e) {
+      console.warn('Visibility init failed', e)
+    }
+  }, [initializeVisibilityOnResume])
   // Sync node dimensions with store
   useEffect(() => {
     const syncDimensions = () => {
@@ -81,7 +91,7 @@ const MindMapContent = () => {
   useEffect(() => {
     if (pendingSubnodeCreation) {
       const { parentId, subnodeId, name } = pendingSubnodeCreation
-      const parentNode = nodes.find(n => n.id === parentId)
+      const parentNode = allNodes.find(n => n.id === parentId)
       
       if (parentNode) {
         const newNode = {
@@ -112,8 +122,18 @@ const MindMapContent = () => {
         }, 100)
       }
     }
-  }, [pendingSubnodeCreation, nodes, addNode, linkNodes, fitView])
+  }, [pendingSubnodeCreation, allNodes, addNode, linkNodes, fitView])
 
+  const visibleNodes = selectVisibleNodes()
+  const visibleEdges = selectVisibleEdges()
+  const nodes = visibleNodes.map(n => ({
+    ...n,
+    data: {
+      ...n.data,
+      depth: selectDepth(n.id)
+    }
+  }))
+  const edges = visibleEdges
   useEffect(() => {
     const nodeCount = nodes.length
     if (nodeCount > 0) {
@@ -188,17 +208,17 @@ const MindMapContent = () => {
         fitView
         minZoom={0.2}
         maxZoom={2}
+        defaultEdgeOptions={{
+          style: {
+            stroke: 'var(--mm-color-edge)',
+            strokeWidth: 2
+          },
+          type: 'smoothstep'
+        }}
         connectionLineStyle={{
           stroke: '#007bff',
           strokeWidth: 3,
           strokeDasharray: '5,5'
-        }}
-        defaultEdgeOptions={{
-          style: {
-            stroke: '#007bff',
-            strokeWidth: 2
-          },
-          type: 'smoothstep'
         }}
       >
         <Background />

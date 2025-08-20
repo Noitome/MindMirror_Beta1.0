@@ -8,12 +8,14 @@ const DamageEffect = ({ overallAlignmentScore }) => {
   const triggerDamageEffect = useMindMapStore(state => state.triggerDamageEffect)
   const clearDamageEffect = useMindMapStore(state => state.clearDamageEffect)
   const damageEffects = useMindMapStore(state => state.damageEffects)
+  const showAlignmentFeedback = useMindMapStore(state => state.showAlignmentFeedback)
   
   useEffect(() => {
+    if (!showAlignmentFeedback()) return
     if (overallAlignmentScore < 95 && overallAlignmentScore !== null) {
       triggerDamageEffect(overallAlignmentScore)
     }
-  }, [overallAlignmentScore, triggerDamageEffect])
+  }, [overallAlignmentScore, triggerDamageEffect, showAlignmentFeedback])
   
   useEffect(() => {
     if (damageEffects.isActive) {
@@ -32,7 +34,8 @@ const DamageEffect = ({ overallAlignmentScore }) => {
         setIsPulsing(true)
         setTimeout(() => setIsPulsing(false), 5000)
       } else if (type === 'multi') {
-        const hitCount = alignmentScore < 20 ? 4 : alignmentScore < 30 ? 3 : 2
+        const score = overallAlignmentScore ?? 100
+        const hitCount = score < 20 ? 4 : score < 30 ? 3 : 2
         for (let i = 0; i < hitCount; i++) {
           setTimeout(() => {
             addEffect(intensity, 125)

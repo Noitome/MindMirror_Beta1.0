@@ -15,8 +15,11 @@ const ListView = ({ showBackendData }) => {
   
   const overallAlignment = selectOverallAlignment()
   
+  const showAlignmentFeedback = useMindMapStore(state => state.showAlignmentFeedback)
   useEffect(() => {
     updateAchievements(overallAlignment)
+    if (!showAlignmentFeedback()) return
+
     if (overallAlignment < 95) {
       triggerDamageEffect(overallAlignment)
     }
@@ -267,14 +270,35 @@ const ListView = ({ showBackendData }) => {
             <div style={{
               fontSize: `${relativeFontSize}px`,
               fontWeight: 'bold',
-              color: getAlignmentColor(totalAlignmentScore),
+              color: showAlignmentFeedback() ? getAlignmentColor(totalAlignmentScore) : '#333',
               lineHeight: 1,
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
               {totalAlignmentScore}%
-              <StarRating alignmentScore={totalAlignmentScore} size={relativeFontSize * 0.8} />
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <StarRating alignmentScore={totalAlignmentScore} size={relativeFontSize * 0.8} />
+                {!showAlignmentFeedback() && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'rgba(200,200,200,0.3)',
+                      color: '#666',
+                      fontSize: `${relativeFontSize * 0.4}px`,
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    Alignment pending
+                  </div>
+                )}
+              </div>
             </div>
             <div style={{
               fontSize: `${relativeFontSize * 0.6}px`,
@@ -304,8 +328,8 @@ const ListView = ({ showBackendData }) => {
         }}>
           <div style={{
             height: '100%',
-            width: `${Math.min(100, totalAlignmentScore)}%`,
             backgroundColor: getAlignmentColor(totalAlignmentScore),
+            width: `${Math.min(100, totalAlignmentScore)}%`,
             transition: 'width 0.3s ease'
           }} />
         </div>
