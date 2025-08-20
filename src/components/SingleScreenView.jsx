@@ -155,7 +155,7 @@ const SingleScreenView = () => {
               height: '100%',
               overflow: 'auto'
             }}>
-              <RealityView />
+              <RealityView isStandalone={false} />
             </div>
           </div>
         )}
@@ -174,7 +174,7 @@ const SingleScreenView = () => {
 
         {activeView === 'reality' && (
           <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-            <RealityView />
+            <RealityView isStandalone={true} />
           </div>
         )}
       </div>

@@ -13,15 +13,15 @@ const TaskNode = ({ id, data, selected }) => {
   const [showLinking, setShowLinking] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [mergeTargetId, setMergeTargetId] = useState('')
-  
+
   const setPopupOpen = useMindMapStore(state => state.setPopupOpen)
   const [linkingMode, setLinkingMode] = useState(null) // 'parent' or 'child'
-  
+
   React.useEffect(() => {
     const isAnyPopupOpen = showNotes || showTimeAdjuster || showLinking || showDeleteConfirm
     setPopupOpen(isAnyPopupOpen)
   }, [showNotes, showTimeAdjuster, showLinking, showDeleteConfirm, setPopupOpen])
-  
+
   const updateTaskName = useMindMapStore(state => state.updateTaskName)
   const task = useMindMapStore(state => state.tasks[id])
   const linkNodes = useMindMapStore(state => state.linkNodes)
@@ -71,16 +71,16 @@ const TaskNode = ({ id, data, selected }) => {
   if (!task) return null
 
   return (
-    <div 
-      className="task-node" 
+    <div
+      className="task-node"
       onDoubleClick={() => {
         const hasChildren = (nodeRelationships[id]?.children || []).length > 0
         if (hasChildren) {
           useMindMapStore.getState().toggleCollapse(id)
         }
       }}
-      style={{ 
-        width: '100%', 
+      style={{
+        width: '100%',
         height: '100%',
         position: 'relative',
         border: isMainNode(id) ? '3px solid #FF6B35' : nodeRelationships[id]?.parent ? '2px solid var(--mm-color-edge)' : '2px solid #4CAF50',
@@ -96,7 +96,7 @@ const TaskNode = ({ id, data, selected }) => {
         transition: 'box-shadow 200ms ease, transform 200ms ease, background-color 200ms ease'
       }}
     >
-      <NodeResizer 
+      <NodeResizer
         color="#4CAF50"
         isVisible={selected}
         minWidth={50}
@@ -108,18 +108,114 @@ const TaskNode = ({ id, data, selected }) => {
           backgroundColor: '#4CAF50'
         }}
       />
-      <Handle type="target" position={Position.Top} />
-      <Handle type="target" position={Position.Bottom} />
-      <Handle type="target" position={Position.Left} />
-      <Handle type="target" position={Position.Right} />
-      <Handle type="source" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
-      <Handle type="source" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
-      <div 
-        className="task-content" 
+      <Handle 
+        type="target" 
+        position={Position.Top} 
         style={{ 
-          width: '100%', 
+          background: '#007bff',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(0,123,255,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="target" 
+        position={Position.Bottom} 
+        style={{ 
+          background: '#007bff',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(0,123,255,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="target" 
+        position={Position.Left} 
+        style={{ 
+          background: '#007bff',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(0,123,255,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="target" 
+        position={Position.Right} 
+        style={{ 
+          background: '#007bff',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(0,123,255,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Top} 
+        style={{ 
+          background: '#28a745',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(40,167,69,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ 
+          background: '#28a745',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(40,167,69,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Left} 
+        style={{ 
+          background: '#28a745',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(40,167,69,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        style={{ 
+          background: '#28a745',
+          width: '14px',
+          height: '14px',
+          border: '2px solid #ffffff',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(40,167,69,0.4)',
+          opacity: 0.9
+        }}
+      />
+      <div
+        className="task-content"
+        style={{
+          width: '100%',
           textAlign: 'center',
           display: 'flex',
           alignItems: 'center',
@@ -180,7 +276,7 @@ const TaskNode = ({ id, data, selected }) => {
           {nodeRelationships[id]?.parent && <div style={{ color: '#007bff', fontWeight: 'bold' }}>📎 SUB</div>}
           {new Date(task.createdAt).toLocaleDateString()}
           {task.lastWorkedOn && (
-            <div style={{ 
+            <div style={{
               fontSize: '0.8em',
               opacity: 0.8
             }}>
@@ -192,7 +288,7 @@ const TaskNode = ({ id, data, selected }) => {
           value={data.name || ''}
           onChange={handleNameChange}
           className="task-name"
-          style={{ 
+          style={{
             ...dynamicStyles.name,
             width: '100%',
             textAlign: 'center',
@@ -212,7 +308,7 @@ const TaskNode = ({ id, data, selected }) => {
         <div style={{...dynamicStyles.timer, marginTop: '5px', width: '100%', height: '30%'}}>
           <Timer taskId={id} width={data.width} height={data.height} />
         </div>
-        
+
         {/* Action buttons */}
         <div style={{
           display: 'flex',
@@ -221,7 +317,7 @@ const TaskNode = ({ id, data, selected }) => {
           marginTop: '10px',
           flexWrap: 'wrap'
         }}>
-          <button 
+          <button
             onClick={() => setShowNotes(!showNotes)}
             style={{
               padding: '4px 8px',
@@ -235,7 +331,7 @@ const TaskNode = ({ id, data, selected }) => {
           >
             Notes
           </button>
-          <button 
+          <button
             onClick={() => setShowTimeAdjuster(!showTimeAdjuster)}
             style={{
               padding: '4px 8px',
@@ -249,7 +345,7 @@ const TaskNode = ({ id, data, selected }) => {
           >
             Adjust Time
           </button>
-          <button 
+          <button
             onClick={() => setShowLinking(!showLinking)}
             style={{
               padding: '4px 8px',
@@ -263,10 +359,40 @@ const TaskNode = ({ id, data, selected }) => {
           >
             Link
           </button>
+testttttt          <button
+            onClick={() => {
+              const newSubnodeId = `node_${Date.now()}`
+              const newSubnodeName = `Subnode of ${data.name}`
+              useMindMapStore.setState({
+                pendingSubnodeCreation: {
+                  parentId: id,
+                  subnodeId: newSubnodeId,
+                  name: newSubnodeName
+                }
+              })
+            }}
+            style={{
+              padding: '4px 8px',
+              fontSize: Math.max(8, (data.width || 200) * 0.03) + 'px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: '1px solid #28a745',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              width: Math.max(20, (data.width || 200) * 0.1) + 'px',
+              height: Math.max(20, (data.width || 200) * 0.1) + 'px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Add Subnode"
+          >
+            +
+          </button>
         </div>
-        
+
         {/* Delete button - positioned bottom left, half size */}
-        <button 
+        <button
           onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
           style={{
             position: 'absolute',
@@ -283,7 +409,7 @@ const TaskNode = ({ id, data, selected }) => {
         >
           🗑️
         </button>
-        
+
         {/* Popup modals */}
         {showNotes && (
           <div style={{
@@ -315,7 +441,7 @@ const TaskNode = ({ id, data, selected }) => {
                 marginBottom: '15px'
               }}>
                 <h3 style={{ margin: 0 }}>Notes for {data.name}</h3>
-                <button 
+                <button
                   onClick={() => setShowNotes(false)}
                   style={{
                     background: 'none',
@@ -332,7 +458,7 @@ const TaskNode = ({ id, data, selected }) => {
             </div>
           </div>
         )}
-        
+
         {showTimeAdjuster && (
           <div style={{
             position: 'fixed',
@@ -363,7 +489,7 @@ const TaskNode = ({ id, data, selected }) => {
                 marginBottom: '15px'
               }}>
                 <h3 style={{ margin: 0 }}>Adjust Time for {data.name}</h3>
-                <button 
+                <button
                   onClick={() => setShowTimeAdjuster(false)}
                   style={{
                     background: 'none',
@@ -411,7 +537,7 @@ const TaskNode = ({ id, data, selected }) => {
                 marginBottom: '15px'
               }}>
                 <h3 style={{ margin: 0 }}>Link Nodes for {data.name}</h3>
-                <button 
+                <button
                   onClick={() => setShowLinking(false)}
                   style={{
                     background: 'none',
@@ -424,7 +550,7 @@ const TaskNode = ({ id, data, selected }) => {
                   ×
                 </button>
               </div>
-              
+
               {/* Current relationships */}
               <div style={{ marginBottom: '20px' }}>
                 <h4>Current Status:</h4>
@@ -435,7 +561,7 @@ const TaskNode = ({ id, data, selected }) => {
                 ) : (
                   <p style={{ color: '#6c757d' }}>🔗 Independent node</p>
                 )}
-                
+
                 {nodeRelationships[id]?.children?.length > 0 && (
                   <div>
                     <p>Subnodes:</p>
@@ -467,13 +593,13 @@ const TaskNode = ({ id, data, selected }) => {
                   </div>
                 )}
               </div>
-              
+
               {/* Available nodes to link */}
               <div>
                 <h4>Available Nodes:</h4>
                 <div style={{ maxHeight: '200px', overflow: 'auto' }}>
-                  {nodes.filter(node => 
-                    node.id !== id && 
+                  {nodes.filter(node =>
+                    node.id !== id &&
                     nodeRelationships[id]?.parent !== node.id &&
                     !nodeRelationships[id]?.children?.includes(node.id)
                   ).map(node => (
@@ -563,7 +689,7 @@ const TaskNode = ({ id, data, selected }) => {
                 marginBottom: '15px'
               }}>
                 <h3 style={{ margin: 0, color: '#dc3545' }}>Delete {data.name}</h3>
-                <button 
+                <button
                   onClick={() => setShowDeleteConfirm(false)}
                   style={{
                     background: 'none',
@@ -576,11 +702,11 @@ const TaskNode = ({ id, data, selected }) => {
                   ×
                 </button>
               </div>
-              
+
               <p style={{ marginBottom: '20px' }}>
                 What would you like to do with this node's data?
               </p>
-              
+
               <div style={{ marginBottom: '20px' }}>
                 <h4>Merge with another node:</h4>
                 <select

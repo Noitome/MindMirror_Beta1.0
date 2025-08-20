@@ -1,10 +1,11 @@
-import React, { useMemo, useEffect } from 'react'
+import React, { useMemo, useEffect, useState } from 'react'
 import { useMindMapStore } from '../store/mindMapStore'
 import StarRating from './StarRating'
 import CrownAchievement from './CrownAchievement'
 import DamageEffect from './DamageEffect'
 
 const ListView = ({ showBackendData }) => {
+  const [collapsedNodes, setCollapsedNodes] = useState(new Set())
   const tasks = useMindMapStore(state => state.tasks)
   const nodes = useMindMapStore(state => state.nodes)
   const selectOverallAlignment = useMindMapStore(state => state.selectOverallAlignment)
@@ -148,10 +149,16 @@ const ListView = ({ showBackendData }) => {
                 const nodeRelationships = useMindMapStore.getState().nodeRelationships
                 const isSubnode = nodeRelationships[task.id]?.parent
                 const indentLevel = useMindMapStore.getState().selectDepth(task.id)
+                const hasChildren = nodeRelationships[task.id]?.children?.length > 0
+                const isCollapsed = collapsedNodes.has(task.id)
+                
+                if (isSubnode && collapsedNodes.has(nodeRelationships[task.id].parent)) {
+                  return null
+                }
                 
                 return (
                 <div key={task.id} style={{
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: isSubnode ? '#f0f8ff' : '#f8f9fa',
                   border: '1px solid #dee2e6',
                   borderRadius: '8px',
                   padding: isMobile ? '12px' : '15px',
@@ -159,7 +166,7 @@ const ListView = ({ showBackendData }) => {
                   minHeight: isMobile ? '60px' : 'auto',
                   marginLeft: `${indentLevel * 1.25}rem`,
                   width: `calc(100% - ${indentLevel * 1.25}rem)`,
-                  borderLeft: isSubnode ? `4px solid rgba(0, 123, 255, ${Math.min(0.2 + 0.1 * indentLevel, 0.7)})` : '1px solid #dee2e6'
+                  borderLeft: isSubnode ? `4px solid rgba(0, 123, 255, ${Math.min(0.4 + 0.2 * indentLevel, 0.9)})` : '1px solid #dee2e6'
                 }}>
                   <div style={{
                     display: 'flex',
@@ -171,12 +178,35 @@ const ListView = ({ showBackendData }) => {
                       <h4 style={{ 
                         margin: 0, 
                         color: '#333',
-                        fontSize: isMobile ? '14px' : '16px',
+                        fontSize: isSubnode ? (isMobile ? '12px' : '14px') : (isMobile ? '14px' : '16px'),
                         lineHeight: 1.3,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px'
                       }}>
+                        {hasChildren && (
+                          <button
+                            onClick={() => {
+                              const newCollapsed = new Set(collapsedNodes)
+                              if (isCollapsed) {
+                                newCollapsed.delete(task.id)
+                              } else {
+                                newCollapsed.add(task.id)
+                              }
+                              setCollapsedNodes(newCollapsed)
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              padding: '0 4px',
+                              color: '#666'
+                            }}
+                          >
+                            {isCollapsed ? '▶' : '▼'}
+                          </button>
+                        )}
                         {index + 1}. {task.name}
                         {isMainNode(task.id) && (
                           <span style={{

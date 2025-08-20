@@ -63,11 +63,6 @@ export default function RoutedEdge({
 
   return (
     <>
-      <defs>
-        <marker id="mm-edge-arrow" markerWidth="12" markerHeight="12" refX="12" refY="6" orient="auto">
-          <path d="M0,0 L12,6 L0,12 z" fill="var(--mm-edge-marker)" />
-        </marker>
-      </defs>
       <path
         id={id}
         d={d}
@@ -77,7 +72,6 @@ export default function RoutedEdge({
         strokeWidth={selected ? 4 : 3}
         strokeLinecap="round"
         strokeLinejoin="round"
-        markerEnd="url(#mm-edge-arrow)"
         style={{
           opacity: selected ? 1 : 0.9,
           transition: 'stroke 200ms ease, stroke-width 200ms ease, opacity 200ms ease'
