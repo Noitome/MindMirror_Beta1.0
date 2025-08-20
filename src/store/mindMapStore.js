@@ -683,7 +683,7 @@ export const useMindMapStore = create((set, get) => ({
         id: `${parentId}-${childId}`,
         source: parentId,
         target: childId,
-        type: 'smoothstep'
+        type: 'routed'
       }
 
       logNodeLink(parentId, childId)
