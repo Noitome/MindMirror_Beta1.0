@@ -83,15 +83,17 @@ const TaskNode = ({ id, data, selected }) => {
         width: '100%', 
         height: '100%',
         position: 'relative',
-        border: isMainNode(id) ? '3px solid #FF6B35' : nodeRelationships[id]?.parent ? '2px solid #007bff' : '2px solid #4CAF50',
+        border: isMainNode(id) ? '3px solid #FF6B35' : nodeRelationships[id]?.parent ? '2px solid var(--mm-color-edge)' : '2px solid #4CAF50',
         borderRadius: '8px',
-        boxShadow: isMainNode(id) ? '0 4px 8px rgba(255,107,53,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+        boxShadow: isMainNode(id) ? '0 4px 8px rgba(255,107,53,0.3)' : `var(--mm-depth-${Math.min(depth,6)}-shadow)`,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         ...dynamicStyles.container,
-        backgroundColor: 'white'
+        backgroundColor: `var(--mm-depth-${Math.min(depth,6)}-bg)`,
+        zIndex: 1000 - Math.min(depth, 50),
+        transition: 'box-shadow 200ms ease, transform 200ms ease, background-color 200ms ease'
       }}
     >
       <NodeResizer 

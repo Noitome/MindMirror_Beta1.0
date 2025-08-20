@@ -66,6 +66,11 @@ export const useMindMapStore = create((set, get) => ({
     return total
   },
 
+  selectHasNonTrivialTime: (minMs = 60000) => {
+    const total = get().selectTotalTrackedMs()
+    return total >= minMs
+  },
+
   showAlignmentFeedback: () => {
     const { alignmentFeedbackThresholdMs } = get()
     const total = get().selectTotalTrackedMs()
@@ -678,7 +683,7 @@ export const useMindMapStore = create((set, get) => ({
         id: `${parentId}-${childId}`,
         source: parentId,
         target: childId,
-        type: 'smoothstep'
+        type: 'routed'
       }
 
       logNodeLink(parentId, childId)

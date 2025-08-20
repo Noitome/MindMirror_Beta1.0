@@ -7,6 +7,9 @@
   --mm-color-danger: #EF4444;
   --mm-color-rail: #e0e0e0;
   --mm-color-edge: #007bff;
+  --mm-color-edge-hover: #3b82f6;
+  --mm-color-edge-selected: #2563eb;
+  --mm-edge-marker: #2563eb;
 
   --mm-neutral-0: #ffffff;
   --mm-neutral-50: #f9fafb;
@@ -15,6 +18,23 @@
   --mm-neutral-300: #d1d5db;
   --mm-neutral-600: #4b5563;
   --mm-neutral-900: #111827;
+
+  --mm-depth-0-bg: #ffffff;
+  --mm-depth-1-bg: #f8fbff;
+  --mm-depth-2-bg: #f3f8ff;
+  --mm-depth-3-bg: #edf4ff;
+  --mm-depth-4-bg: #e8f1ff;
+  --mm-depth-5-bg: #e3eeff;
+  --mm-depth-6-bg: #deebff;
+
+  --mm-depth-0-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  --mm-depth-1-shadow: 0 3px 8px rgba(0,0,0,0.07);
+  --mm-depth-2-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  --mm-depth-3-shadow: 0 5px 12px rgba(0,0,0,0.09);
+  --mm-depth-4-shadow: 0 6px 14px rgba(0,0,0,0.10);
+  --mm-depth-5-shadow: 0 7px 16px rgba(0,0,0,0.11);
+  --mm-depth-6-shadow: 0 8px 18px rgba(0,0,0,0.12);
+
 
   --mm-font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   --mm-font-size-sm: 12px;
@@ -187,3 +207,7 @@ h2 {
   padding: 5px 10px;
   font-size: 0.8em;
 }
+.mm-edge-path { stroke-dasharray: none; transition: stroke 200ms ease, stroke-width 200ms ease, opacity 200ms ease; }
+.mm-edge-path:hover { opacity: 1; }
+.mm-edge-path.is-hovering { stroke-dasharray: 6 6; animation: mm-dash-move 1s linear infinite; }
+@keyframes mm-dash-move { to { stroke-dashoffset: -12; } }
