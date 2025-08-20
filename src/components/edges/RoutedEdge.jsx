@@ -71,14 +71,18 @@ export default function RoutedEdge({
       <path
         id={id}
         d={d}
+        className="mm-edge-path"
         fill="none"
         stroke={selected ? 'var(--mm-color-edge-selected)' : 'var(--mm-color-edge)'}
-        strokeWidth={selected ? 3 : 2}
+        strokeWidth={selected ? 4 : 3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
         markerEnd="url(#mm-edge-arrow)"
         style={{
-          opacity: selected ? 1 : 0.7,
+          opacity: selected ? 1 : 0.9,
           transition: 'stroke 200ms ease, stroke-width 200ms ease, opacity 200ms ease'
         }}
+        pointerEvents="visibleStroke"
       />
     </>
   )
