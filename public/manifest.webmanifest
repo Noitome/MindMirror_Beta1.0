@@ -8,7 +8,7 @@
   "background_color": "#ffffff",
   "icons": [
     {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABbC3X4AAAABmJLR0QA/wD/AP+gvaeTAAABcElEQVR4nO3QsQ3CMBQF0cWvJv3RNI0YlTQ8b3QmFQw7oQbQb1kC8v7qk2Yq2v7c3gC+uC0AAAAAAAAAAAAAAAAAAABYyq3yF3lZbq7xN1w9y8i3e1tHc+u7m7GmC7fM1b+2f0Z1gqGg9n2Irf8Q9qYgk8bN0v3gV0yA1fQ9yJj3JfJw5qgW+f6zC1A1n0PciY9yXycOaoFvn+swlQNZ9D3ImPcl8nDmqBb5/rMJUDWfQ9yJj3JfJw5qgW+f6zCVA2nZBrn2sC5m2o5bN3zNfHq0o2nZBrn2sC5m2o5bN3zNfHq0o2nZBrn2sC5m2o5bN3zNfHq0o2nZBrn2sC5m2o5bN3zNfHq0o2nZBrn2sC5m2o5bN3zNfHq0o2nZBrn2sC5m2o5bN3zNfHq0oAAAAAAAAAAAAAAAAAAAAAL4Gm0y3m3yq8wAAAABJRU5ErkJggg==",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"

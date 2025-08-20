@@ -189,8 +189,8 @@ using (auth.uid() = id)
 with check (auth.uid() = id);
 ```
 - OAuth redirect URLs (Auth > URL Configuration):
-  - http://localhost:5173
-  - http://localhost:5173/ for some providers
+  - http://localhost:3000
+  - http://localhost:3000/ for some providers
   - Add your production domain(s) later
 - Providers: enable at least Google and GitHub (and optionally Microsoft/Email).
 - Environment:
@@ -211,7 +211,7 @@ npm test  # Run all tests including persistence adapter tests
 
 ## ▶️ Usage
 
-- Run `npm run dev` and open [http://localhost:5173](http://localhost:5173).
+- Run `npm run dev` and open [http://localhost:3000](http://localhost:3000).
 - Create nodes, link them, and start timers.
 - Switch between **Mindmap View**, **Mirror View**, or the **Combined View**.
 - Export your map when needed (JSON/Markdown/PNG).
