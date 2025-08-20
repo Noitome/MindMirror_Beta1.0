@@ -216,13 +216,6 @@ const ListView = ({ showBackendData }) => {
                         fontSize: isMobile ? '13px' : '14px'
                       }}>
                         {formatDuration(task.timeSpent)}
-                      <div style={{
-                        color: showAlignmentFeedback() ? getAlignmentColor(task.alignmentScore) : '#666',
-                        fontWeight: 'bold',
-                        fontSize: isMobile ? '12px' : '14px'
-                      }}>
-                        {showAlignmentFeedback() ? `${task.alignmentScore}% aligned` : 'Alignment pending'}
-                      </div>
                       </div>
                       <div style={{
                         color: getAlignmentColor(task.alignmentScore),
@@ -284,7 +277,28 @@ const ListView = ({ showBackendData }) => {
               gap: '8px'
             }}>
               {totalAlignmentScore}%
-              <StarRating alignmentScore={totalAlignmentScore} size={relativeFontSize * 0.8} />
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <StarRating alignmentScore={totalAlignmentScore} size={relativeFontSize * 0.8} />
+                {!showAlignmentFeedback() && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'rgba(200,200,200,0.3)',
+                      color: '#666',
+                      fontSize: `${relativeFontSize * 0.4}px`,
+                      fontWeight: 'bold',
+                      borderRadius: '4px',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    Alignment pending
+                  </div>
+                )}
+              </div>
             </div>
             <div style={{
               fontSize: `${relativeFontSize * 0.6}px`,
@@ -314,7 +328,7 @@ const ListView = ({ showBackendData }) => {
         }}>
           <div style={{
             height: '100%',
-            backgroundColor: showAlignmentFeedback() ? getAlignmentColor(totalAlignmentScore) : '#bbb',
+            backgroundColor: getAlignmentColor(totalAlignmentScore),
             width: `${Math.min(100, totalAlignmentScore)}%`,
             transition: 'width 0.3s ease'
           }} />
