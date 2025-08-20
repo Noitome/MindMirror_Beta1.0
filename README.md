@@ -145,6 +145,61 @@ cp .env.example .env
 # (other Firebase config values)
 
 npm run dev -- --host 0.0.0.0 --port 5173
+### With Supabase (Recommended)
+```bash
+cp .env.example .env
+# set:
+# VITE_AUTH_ENABLED=true
+# VITE_BACKEND=supabase
+# VITE_SUPABASE_URL=your_supabase_url
+# VITE_SUPABASE_ANON_KEY=your_anon_key
+
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+### PWA Install
+- The app supports install on desktop and mobile. Look for “Install app” in your browser menu (or Add to Home Screen on mobile).
+- Works offline: first load online to cache assets, then you can continue offline. Local data is stored in IndexedDB and synced when online.
+
+### Supabase setup (Auth + Storage)
+- In Project Settings > API, note your Project URL (https://YOUR_PROJECT.supabase.co) and anon public key. Do NOT use service_role in the frontend.
+- Create table `users`:
+```sql
+create table if not exists public.users (
+  id uuid primary key references auth.users(id) on delete cascade,
+  data jsonb,
+  last_saved_at bigint
+);
+```
+- Enable Row Level Security and policies:
+```sql
+alter table public.users enable row level security;
+
+create policy "users_select_own"
+on public.users for select
+using (auth.uid() = id);
+
+create policy "users_upsert_own"
+on public.users for insert
+with check (auth.uid() = id);
+
+create policy "users_update_own"
+on public.users for update
+using (auth.uid() = id)
+with check (auth.uid() = id);
+```
+- OAuth redirect URLs (Auth > URL Configuration):
+  - http://localhost:5173
+  - http://localhost:5173/ for some providers
+  - Add your production domain(s) later
+- Providers: enable at least Google and GitHub (and optionally Microsoft/Email).
+- Environment:
+  - VITE_AUTH_ENABLED=true
+  - VITE_BACKEND=supabase
+  - VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+  - VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+
+
 ```
 
 ### Testing
