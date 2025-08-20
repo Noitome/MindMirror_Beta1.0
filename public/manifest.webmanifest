@@ -1,0 +1,29 @@
+{
+  "name": "MindMirror",
+  "short_name": "MindMirror",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQgAAAEICAYAAAB+0lCqAAAABmJLR0QA/wD/AP+gvaeTAAABlUlEQVR4nO3TMQEAIAzAsKz/0mJ0okl1pF41uKxwQwAAAAAAAAAAAAAAAAAAABQ3Xxgq0c1o9bFv8Jr3b8qfK9x0U0vXG3qf6Hk6r2z2dV9C8c0t1r+f1t8b2Qv3j6p9c3tM2aKf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6wAAAAAAAAAAAAAAAAAAAPBv3wG2h8mK0kqH1wAAAABJRU5ErkJggg==",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQgAAAEICAYAAAB+0lCqAAAABmJLR0QA/wD/AP+gvaeTAAABlUlEQVR4nO3TMQEAIAzAsKz/0mJ0okl1pF41uKxwQwAAAAAAAAAAAAAAAAAAABQ3Xxgq0c1o9bFv8Jr3b8qfK9x0U0vXG3qf6Hk6r2z2dV9C8c0t1r+f1t8b2Qv3j6p9c3tM2aKf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6zqYf6rJ7W3r4b1kQ3fTrR9c3oM2aGf6wAAAAAAAAAAAAAAAAAAAPBv3wG2h8mK0kqH1wAAAABJRU5ErkJggg==",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}

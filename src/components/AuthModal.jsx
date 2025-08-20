@@ -10,14 +10,19 @@ const AuthModal = ({ onClose }) => {
   
   const login = useMindMapStore(state => state.login)
 
-  const providers = [
+  const allowed = (import.meta.env?.VITE_AUTH_PROVIDERS || 'google,github,microsoft,email')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean)
+
+  const allProviders = [
     { id: 'google', name: 'Google', icon: '🔍', color: '#db4437' },
-    { id: 'facebook', name: 'Facebook', icon: '📘', color: '#4267B2' },
     { id: 'github', name: 'GitHub', icon: '🐙', color: '#333' },
     { id: 'microsoft', name: 'Microsoft', icon: '🪟', color: '#00a1f1' },
-    { id: 'linkedin', name: 'LinkedIn', icon: '💼', color: '#0077b5' },
     { id: 'email', name: 'Email', icon: '📧', color: '#6c757d' }
   ]
+
+  const providers = allProviders.filter(p => allowed.includes(p.id))
 
   const handleProviderLogin = async (providerId) => {
     setIsLoading(true)

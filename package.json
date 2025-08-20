@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000 --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --port 5173 --host 0.0.0.0",
+    "preview": "vite preview --port 3000 --host 0.0.0.0",
     "test": "node --test tests/"
   },
   "dependencies": {
@@ -18,12 +18,14 @@
     "react-dom": "^18.2.0",
     "react-resizable": "^3.0.5",
     "reactflow": "^11.8.3",
-    "zustand": "^4.4.1"
+    "zustand": "^4.4.1",
+    "@supabase/supabase-js": "^2.45.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
-    "vite": "^4.4.5"
+    "vite": "^4.4.5",
+    "vite-plugin-pwa": "^0.20.0"
   }
 }
